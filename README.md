@@ -6,7 +6,7 @@ Standalone Windows 11 weather widget. Native C# / WPF on .NET 10, with no XWidge
 
 Open `artifacts/win-x64/WeatherWidget.exe` after building a portable release. Keep its `Assets` folder beside the executable. The self-contained x64 package includes its runtime; no SDK, XWidget, browser or API key is needed on the target PC.
 
-The widget runs in the notification area (system tray), without a taskbar button. Drag the compact card to move it. Click without dragging to expand forecasts. Escape, the close button or clicking outside collapses the expanded view. Right-click the card or tray icon for settings. Double-click the tray icon or launch the app again to recover the existing widget. Exit through the menu. Startup with Windows is off by default and can be enabled/disabled in the menu.
+The widget runs in the notification area (system tray), without a taskbar button. Its sun/cloud icon is available as editable vector artwork under Assets/Brand. Drag the compact card to move it. Click without dragging to expand forecasts. Escape, the close button or clicking outside collapses the expanded view. Right-click the card or tray icon for settings. Double-click the tray icon or launch the app again to recover the existing widget. Exit through the menu. Startup with Windows is off by default and can be enabled/disabled in the menu.
 
 ## Features
 
@@ -22,7 +22,7 @@ Default city: Zagreb. Settings, cache and rotating diagnostic log are in `%LOCAL
 
 ## Desktop compatibility
 
-Default desktop mode attaches the card behind applications through Explorer's wallpaper host, so it can behave like a desktop widget. Explorer's WorkerW layout is undocumented and may change after Windows updates. The app validates the host/DPI context and reports a fallback in Status if hosting fails; tray recovery is always available. Always-on-top intentionally uses a different window layer.
+Default desktop mode keeps the card as a top-level transparent popup owned by the desktop shell, behind ordinary application windows. The earlier wallpaper-child implementation failed visibility testing and has been replaced. Shell-owned Win+D/virtual-desktop behavior still requires compatibility checks on Windows updates. Tray recovery briefly lifts the card into view without changing the always-on-top preference. Always-on-top intentionally uses a different window layer.
 
 The exact Windows validation evidence and any remaining gaps are recorded in `docs/validation.md`. Compilation and fixture tests alone do not establish shell behavior on every Windows build or display setup.
 

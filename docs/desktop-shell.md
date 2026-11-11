@@ -1,3 +1,9 @@
+# Desktop hosting implementation notes
+
+**Current correction:** the original wallpaper-child prototype below failed actual owner visibility testing. Default hosting now uses a top-level layered WPF popup owned by GetShellWindow/Progman through GWLP_HWNDPARENT. This keeps WPF composition top-level; a valid child parent did not prove that the card appeared above wallpaper. Explicit recovery briefly lifts the card before returning to desktop ordering. Shell ownership itself uses a documented API, but Win+D and virtual-desktop semantics remain compatibility behavior requiring runtime validation.
+
+## Historical prototype and limitations
+
 # Desktop shell prototype
 
 The shell is a .NET 10 WPF application. It uses a named per-session mutex and event to keep one instance; a second launch asks the first instance to recover its card. The tray offers recovery, lock, always-on-top, status and exit. Settings and a size-limited shell.log live under %LOCALAPPDATA%\WeatherWidget. Position is stored in physical screen pixels and clamped to a current monitor work area on startup, recovery, monitor change and drag completion. Negative monitor origins are valid.

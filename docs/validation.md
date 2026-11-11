@@ -33,3 +33,14 @@ Self-contained win-x64 publish completed with zero warnings/errors. Ran artifact
 
 Final manifest declares Windows 10/11 compatibility (supportedOS GUID documented by Microsoft) in addition to PerMonitorV2 DPI awareness. Final self-contained rebuild passed with zero warnings/errors. Final package executable SHA-256: AB20A8E589312D18C22865DDE68F92751E6EE7398E104206631BA6BF7EA4F340.
 
+
+## Owner-reported visibility failure and corrective work
+
+The owner reported that the tray and menus worked but the main card was invisible. This contradicts any inference of visual success from the earlier valid child-parent/visible/DPI flags. The earlier WorkerW child-host approach is rejected as a functional implementation.
+
+The corrective implementation retains WPF's layered card as a top-level popup owned by the desktop shell, rather than a wallpaper child. Explicit Show/recover adds a short visibility lift without changing the saved always-on-top preference. Actual visibility, Win+D and virtual-desktop behavior still require rechecking after this change.
+
+A new editable vector sun/cloud app icon and multi-size ICO are included for the executable, tray and forecast window. Assets are under Assets/Brand, and scripts/GenerateIcon.ps1 regenerates the raster/icon files. Existing supplied weather backgrounds are unchanged.
+
+Version 0.1.1: corrected desktop-owned popup launched as the packaged executable and retained saved preferences. Native diagnostics show a top-level WS_POPUP/WS_EX_LAYERED/WS_EX_TOOLWINDOW, owned by the desktop shell, with an on-screen 220x113 rectangle. These remain native-state observations pending owner visibility confirmation. The nine icon frames decoded successfully and integrated WPF checks passed 11/11 after icon wiring. Executable SHA-256: 5CB2E8E64998E5799BE8BE555F89830F99F4765F842FCE4828AB52E12537E963.
+

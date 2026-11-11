@@ -8,6 +8,7 @@ public sealed partial class App : System.Windows.Application
     private EventWaitHandle? showEvent, exitEvent;
     private RegisteredWaitHandle? showWait, exitWait;
     private Forms.NotifyIcon? tray;
+    private System.Drawing.Icon? trayIcon;
     private WidgetWindow? widget;
     private readonly DispatcherTimer recoveryTimer = new() { Interval = TimeSpan.FromSeconds(3) };
     private bool exiting;
@@ -39,7 +40,8 @@ public sealed partial class App : System.Windows.Application
         AppSettings.Log("Starting WeatherWidget; OS " + Environment.OSVersion + "; inspect=" + InspectionMode);
         showWait = ThreadPool.RegisterWaitForSingleObject(showEvent, (_, _) => Dispatcher.BeginInvoke(() => Recover(true)), null, Timeout.Infinite, false);
         exitWait = ThreadPool.RegisterWaitForSingleObject(exitEvent, (_, _) => Dispatcher.BeginInvoke(ExitWidget), null, Timeout.Infinite, false);
-        tray = new Forms.NotifyIcon { Icon = System.Drawing.SystemIcons.Application, Text = "WeatherWidget", Visible = true, ContextMenuStrip = BuildTrayMenu() };
+        trayIcon = LoadTrayIcon();
+        tray = new Forms.NotifyIcon { Icon = trayIcon ?? System.Drawing.SystemIcons.Application, Text = "WeatherWidget", Visible = true, ContextMenuStrip = BuildTrayMenu() };
         tray.DoubleClick += (_, _) => Recover(true);
         Recover(false);
         recoveryTimer.Tick += (_, _) => Recover(false);
@@ -91,7 +93,7 @@ public sealed partial class App : System.Windows.Application
             AppSettings.Log("Created widget window.");
         }
         widget.CheckDesktopHost();
-        if (requested) widget.RecoverOnScreen();
+        if (requested) widget.RevealOnScreen();
     }
     public void ExitWidget() { exiting = true; widget?.SavePosition(); Shutdown(); }
     protected override void OnExit(ExitEventArgs e)
@@ -103,9 +105,20 @@ public sealed partial class App : System.Windows.Application
         Weather?.Dispose();
         showWait?.Unregister(null); exitWait?.Unregister(null);
         tray?.Dispose();
+        trayIcon?.Dispose();
         showEvent?.Dispose(); exitEvent?.Dispose();
         instanceMutex?.Dispose();
         base.OnExit(e);
+    }
+    private static System.Drawing.Icon? LoadTrayIcon()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Assets", "Brand", "weather-widget.ico");
+        try { return new System.Drawing.Icon(path); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or System.Runtime.InteropServices.ExternalException)
+        {
+            AppSettings.Log("WeatherWidget tray icon unavailable; using system fallback: " + ex.Message);
+            return null;
+        }
     }
 }
 

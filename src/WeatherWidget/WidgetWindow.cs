@@ -11,6 +11,7 @@ public sealed partial class WidgetWindow : Window
     private readonly App app;
     private nint handle, desktopHost;
     private uint hostProcess;
+    private readonly System.Windows.Threading.DispatcherTimer recoveryLift = new() { Interval=TimeSpan.FromSeconds(5) };
     private TextBlock status = new();
     private Native.Point? dragOrigin;
     private Native.Rect dragBounds;
@@ -39,6 +40,19 @@ public sealed partial class WidgetWindow : Window
             HwndSource.FromHwnd(handle)?.AddHook(WindowMessage);
         };
         Loaded += (_, _) => { RestorePosition(); ApplyDesktopMode(); };
+        recoveryLift.Tick += (_, _) =>
+        {
+            recoveryLift.Stop();
+            if (!IsNativeWindowAlive || app.Settings.AlwaysOnTop || app.InspectionMode) return;
+            Native.SetWindowPos(handle, 1, 0, 0, 0, 0, Native.NoActivate|Native.NoMove|Native.NoSize);
+            AppSettings.Log("Recovery visibility lift ended; restored desktop Z order.");
+        };
+        Closed += (_, _) => recoveryLift.Stop();
+        Deactivated += (_, _) =>
+        {
+            if (IsNativeWindowAlive && !recoveryLift.IsEnabled && !app.Settings.AlwaysOnTop && !app.InspectionMode)
+                Native.SetWindowPos(handle, 1, 0, 0, 0, 0, Native.NoActivate|Native.NoMove|Native.NoSize);
+        };
         PreviewMouseLeftButtonDown += BeginDrag;
         PreviewMouseMove += Drag;
         PreviewMouseLeftButtonUp += EndDrag;
@@ -53,11 +67,17 @@ public sealed partial class WidgetWindow : Window
     }
     public void CheckDesktopHost()
     {
-        if (!IsNativeWindowAlive) return;
-        if (app.Settings.AlwaysOnTop || app.InspectionMode) return;
+        if (!IsNativeWindowAlive || app.Settings.AlwaysOnTop || app.InspectionMode) return;
         Native.GetWindowThreadProcessId(desktopHost, out uint process);
-        if (desktopHost == 0 || !Native.IsWindow(desktopHost) || process != hostProcess || Native.GetParent(handle) != desktopHost)
+        if (desktopHost == 0 || !Native.IsWindow(desktopHost) || process != hostProcess || Native.GetWindow(handle, 4) != desktopHost)
             ApplyDesktopMode();
+        // Shell hide/show and virtual desktop transitions may hide owned popups.
+        // This recovery does not prove that Explorer pins us to all desktops.
+        if (!Native.IsWindowVisible(handle) || Native.IsIconic(handle))
+        {
+            Native.ShowWindow(handle, 4);
+            AppSettings.Log("Recovered hidden desktop-owned popup.");
+        }
     }
     public void ApplyDesktopMode()
     {
@@ -66,69 +86,78 @@ public sealed partial class WidgetWindow : Window
         Detach();
         if (app.Settings.AlwaysOnTop)
         {
-            Native.SetWindowPos(handle, -1, 0, 0, 0, 0, Native.NoActivate|Native.NoMove|Native.NoSize);
+            Native.SetWindowPos(handle, -1, bounds.Left, bounds.Top, 0, 0, Native.NoActivate|Native.NoSize|Native.Show);
             SetStatus(app.Text("Uvijek na vrhu", "Always on top"));
             return;
         }
-        if (app.InspectionMode) { SetStatus("Inspection window — desktop host disabled for UI testing"); return; }
-        var host = FindDesktopHost();
-        AppSettings.Log($"Host candidate={host}; widget DPI={Native.GetWindowDpiAwarenessContext(handle)}; host DPI={(host == 0 ? 0 : Native.GetWindowDpiAwarenessContext(host))}");
-        // Avoid the documented cross-process DPI reset on incompatible hosts.
-        if (host != 0 && Native.AreDpiAwarenessContextsEqual(Native.GetWindowDpiAwarenessContext(handle), Native.GetWindowDpiAwarenessContext(host)))
+        if (app.InspectionMode)
         {
-            var style = Native.GetWindowLongPtr(handle, Native.Style).ToInt64();
-            Native.SetWindowLongPtr(handle, Native.Style, (nint)((style & ~Native.Popup) | Native.Child));
-            Native.SetParent(handle, host);
-            if (Native.GetParent(handle) == host)
+            Native.SetWindowPos(handle, 0, bounds.Left, bounds.Top, 0, 0, Native.NoSize|Native.Show);
+            SetStatus("Inspection window — desktop host disabled for UI testing");
+            return;
+        }
+        LogShellTree();
+        // Keep WPF's layered HWND top-level: a wallpaper child can be composed
+        // underneath Explorer's wallpaper despite valid parent/visible flags.
+        // Ownership uses a documented API; Progman's virtual-desktop behavior is
+        // undocumented shell compatibility behavior requiring actual UI acceptance.
+        var shell=Native.GetShellWindow();
+        if (shell == 0) shell=Native.FindWindow("Progman",null);
+        if (shell != 0 && Native.IsWindow(shell))
+        {
+            Native.SetWindowLongPtr(handle, Native.Owner, shell);
+            if (Native.GetWindow(handle,4)==shell)
             {
-                desktopHost = host;
-                Native.GetWindowThreadProcessId(host, out hostProcess);
-                MoveScreen(bounds.Left, bounds.Top);
-                Native.ShowWindow(handle, 4);
-                SetStatus(app.Text("Radna površina · probni način", "Desktop · compatibility mode"));
+                desktopHost=shell;
+                Native.GetWindowThreadProcessId(shell,out hostProcess);
+                Native.SetWindowPos(handle,1,bounds.Left,bounds.Top,0,0,Native.NoActivate|Native.NoSize|Native.FrameChanged|Native.Show);
+                Native.ShowWindow(handle,4);
+                SetStatus(app.Text("Vlasnik: radna površina · provjera kompatibilnosti", "Desktop-owned popup · compatibility validation"));
+                LogWindow("Attached popup",handle);
                 return;
             }
-            AppSettings.Log("SetParent failed: " + System.Runtime.InteropServices.Marshal.GetLastWin32Error());
-            Detach();
+            AppSettings.Log("Shell ownership failed: "+System.Runtime.InteropServices.Marshal.GetLastWin32Error());
         }
-        MoveScreen(bounds.Left, bounds.Top);
-        Native.SetWindowPos(handle, 1, 0, 0, 0, 0, Native.NoActivate|Native.NoMove|Native.NoSize|Native.Show);
-        SetStatus(app.Text("Rezervni prozor · otvori Status", "Fallback window · open Status"));
+        Native.SetWindowPos(handle,0,bounds.Left,bounds.Top,0,0,Native.NoActivate|Native.NoSize|Native.Show);
+        SetStatus(app.Text("Vidljivi rezervni prozor · otvori Status", "Visible recovery window · open Status"));
+        LogWindow("Visible fallback",handle);
     }
     private void SetStatus(string text)
     {
-        DesktopStatus = text;
-
-
-        if (lastStatus != text) { AppSettings.Log(text); lastStatus=text; }
+        DesktopStatus=text;
+        if (lastStatus!=text) { AppSettings.Log(text);lastStatus=text; }
     }
     private void Detach()
     {
-        Native.SetParent(handle, 0);
-        var style = Native.GetWindowLongPtr(handle, Native.Style).ToInt64();
-        Native.SetWindowLongPtr(handle, Native.Style, (nint)((style & ~Native.Child)|Native.Popup));
-        Native.SetWindowPos(handle, -2, 0, 0, 0, 0, Native.NoActivate|Native.NoMove|Native.NoSize|Native.FrameChanged);
+        // SetParent is only needed to recover an HWND created by the old child-host
+        // implementation. New windows never acquire WS_CHILD or a foreign parent.
+        var style=Native.GetWindowLongPtr(handle,Native.Style).ToInt64();
+        if ((style & Native.Child)!=0) Native.SetParent(handle,0);
+        Native.SetWindowLongPtr(handle,Native.Style,(nint)((style & ~Native.Child)|Native.Popup));
+        Native.SetWindowLongPtr(handle,Native.Owner,0);
+        Native.SetWindowPos(handle,-2,0,0,0,0,Native.NoActivate|Native.NoMove|Native.NoSize|Native.FrameChanged);
         desktopHost=0;
     }
-    private static nint FindDesktopHost()
+    private static void LogWindow(string label,nint window)
     {
-        // Explorer's 0x052C and WorkerW topology are undocumented and may change.
-        var progman = Native.FindWindow("Progman", null);
-        if (progman == 0) return 0;
-        Native.SendMessageTimeout(progman, 0x052C, 0, 0, 2, 200, out _);
-        nint result=0;
-        Native.EnumWindows((window, _) =>
-        {
-            if (Native.FindWindowEx(window, 0, "SHELLDLL_DefView", null) == 0) return true;
-            var worker = Native.FindWindowEx(0, window, "WorkerW", null);
-            if (worker != 0 && Native.IsWindowVisible(worker)) result=worker;
-            // Recent Explorer versions may keep the wallpaper WorkerW below Progman.
-            if (result == 0) result=Native.FindWindowEx(progman, 0, "WorkerW", null);
-            return result == 0;
-        }, 0);
-        return result;
+        var cls=new System.Text.StringBuilder(128);
+        Native.GetClassName(window,cls,cls.Capacity);
+        Native.GetWindowRect(window,out var rect);
+        Native.GetWindowThreadProcessId(window,out uint pid);
+        AppSettings.Log($"{label}: hwnd={window} class={cls} pid={pid} owner={Native.GetWindow(window,4)} parentOrOwner={Native.GetParent(window)} visible={Native.IsWindowVisible(window)} rect={rect.Left},{rect.Top},{rect.Width},{rect.Height} style=0x{Native.GetWindowLongPtr(window,Native.Style).ToInt64():X} ex=0x{Native.GetWindowLongPtr(window,Native.ExStyle).ToInt64():X}");
     }
-    private void RestorePosition()
+    private static void LogShellTree()
+    {
+        Native.EnumWindows((window,_) =>
+        {
+            var cls=new System.Text.StringBuilder(128);
+            Native.GetClassName(window,cls,cls.Capacity);
+            if (cls.ToString() is not ("Progman" or "WorkerW")) return true;
+            LogWindow("Shell root",window);
+            Native.EnumChildWindows(window,(child,_)=> { LogWindow("Shell descendant",child);return true; },0);
+            return true;
+        },0);
+    }    private void RestorePosition()
     {
         var work=Forms.Screen.PrimaryScreen!.WorkingArea;
         MoveScreen((int)(app.Settings.Left ?? work.Right-260), (int)(app.Settings.Top ?? work.Top+48));
@@ -144,11 +173,23 @@ public sealed partial class WidgetWindow : Window
         Native.ShowWindow(handle, 4);
         SavePosition();
     }
+    public void RevealOnScreen()
+    {
+        RecoverOnScreen();
+        if (!IsNativeWindowAlive) return;
+        if (!app.Settings.AlwaysOnTop && !app.InspectionMode)
+        {
+            Native.SetWindowPos(handle,-1,0,0,0,0,Native.NoActivate|Native.NoMove|Native.NoSize|Native.Show);
+            recoveryLift.Stop(); recoveryLift.Start();
+            AppSettings.Log("Requested recovery: five-second visibility lift.");
+        }
+        LogWindow("Explicit reveal",handle);
+    }
     private void MoveScreen(int x, int y)
     {
         var point = new Native.Point(x,y);
         var parent=Native.GetParent(handle);
-        if (parent != 0) Native.ScreenToClient(parent, ref point);
+        if (parent != 0 && (Native.GetWindowLongPtr(handle,Native.Style).ToInt64() & Native.Child)!=0) Native.ScreenToClient(parent, ref point);
         Native.SetWindowPos(handle, 0, point.X, point.Y, 0, 0, Native.NoActivate|Native.NoSize|0x4);
     }
     public void SavePosition()
@@ -178,3 +219,5 @@ public sealed partial class WidgetWindow : Window
         e.Handled=true;
     }
 }
+
+

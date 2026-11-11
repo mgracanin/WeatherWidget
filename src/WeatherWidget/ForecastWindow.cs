@@ -4,6 +4,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
+using System.Windows.Media.Imaging;
 using WeatherWidget.Core;
 namespace WeatherWidget;
 
@@ -17,11 +18,23 @@ internal sealed class ForecastWindow : Window
     public ForecastWindow()
     {
         Title = "WeatherWidget — Forecast"; Width = 528; Height = 388;
+        SetWindowIcon();
         WindowStyle = WindowStyle.None; AllowsTransparency = true; Background = Brushes.Transparent;
         ResizeMode = ResizeMode.NoResize; ShowInTaskbar = false;
         FontFamily = new FontFamily("Segoe UI");
         Content = new Viewbox { Child = scene, Stretch = Stretch.Uniform };
         PreviewKeyDown += (_, e) => { if (e.Key == Key.Escape) { Close(); e.Handled = true; } };
+    }
+    private void SetWindowIcon()
+    {
+        var path = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "Brand", "weather-widget-512.png");
+        try
+        {
+            var image = new BitmapImage(); image.BeginInit(); image.CacheOption = BitmapCacheOption.OnLoad;
+            image.UriSource = new Uri(path, UriKind.Absolute); image.EndInit(); image.Freeze(); Icon = image;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        { AppSettings.Log("Forecast window icon unavailable: " + ex.Message); }
     }
     public void Update(WeatherSnapshot data, string lang, string temperatureUnit, string speedUnit, bool isOffline, string? lastError)
     {

@@ -3,12 +3,17 @@ using System.Text;
 namespace WeatherWidget;
 internal static class Native
 {
-    internal const int Style = -16, ExStyle = -20;
+    internal const int Style = -16, ExStyle = -20, Owner = -8;
     internal const long Child = 0x40000000, Popup = 0x80000000;
     internal const uint NoActivate = 0x10, NoSize = 1, NoMove = 2, FrameChanged = 0x20, Show = 0x40;
     [StructLayout(LayoutKind.Sequential)] internal struct Point { public int X, Y; public Point(int x, int y) { X=x; Y=y; } }
     [StructLayout(LayoutKind.Sequential)] internal struct Rect { public int Left, Top, Right, Bottom; public int Width => Right-Left; public int Height => Bottom-Top; }
     internal delegate bool EnumProc(nint hwnd, nint data);
+    [DllImport("user32.dll")] internal static extern nint GetShellWindow();
+    [DllImport("user32.dll")] internal static extern nint GetWindow(nint hwnd, uint command);
+    [DllImport("user32.dll", CharSet=CharSet.Unicode)] internal static extern int GetClassName(nint hwnd, StringBuilder name, int length);
+    [DllImport("user32.dll")] internal static extern bool EnumChildWindows(nint parent, EnumProc callback, nint data);
+    [DllImport("user32.dll")] internal static extern bool IsIconic(nint hwnd);
     [DllImport("user32.dll", CharSet=CharSet.Unicode)] internal static extern nint FindWindow(string? cls, string? title);
     [DllImport("user32.dll", CharSet=CharSet.Unicode)] internal static extern nint FindWindowEx(nint parent, nint after, string? cls, string? title);
     [DllImport("user32.dll")] internal static extern bool EnumWindows(EnumProc callback, nint data);
@@ -29,3 +34,4 @@ internal static class Native
     [DllImport("user32.dll")] internal static extern nint GetWindowDpiAwarenessContext(nint hwnd);
     [DllImport("user32.dll")] internal static extern bool AreDpiAwarenessContextsEqual(nint first, nint second);
 }
+
