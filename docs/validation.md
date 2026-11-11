@@ -1,3 +1,14 @@
+# Current acceptance — v0.1.3
+
+Owner confirmed the corrected layout, compact size, paired backgrounds, detailed-window movement and proportional resizing. Owner confirmed repeated forecast open/close stays running and the tray icon is visible. Owner confirmed Win+D closes the forecast while retaining the compact card, and the card appears on another virtual desktop.
+
+Final current-source checks: Release build has zero warnings/errors; weather-core harness 10/10 and app harness 13/13 pass. Exactly one packaged v0.1.3 process remains running, with complete live hourly/daily data and no current-run unhandled exceptions or icon-load failures. The private repository and portable ZIP contain the implementation and fixes.
+
+Broader compatibility coverage not exercised: Explorer restart, physical monitor removal, the full 100/150/200 mixed-DPI matrix, and a full Windows logon/startup cycle. Settings persistence, coordinate recovery inputs, startup implementation and lifecycle recovery are present; those platform scenarios are not claimed as runtime-tested. Desktop ownership remains a Windows shell compatibility technique, not a guarantee across future Explorer changes.
+
+The records below are chronological, including superseded failures and earlier pending checks. The owner-confirmed target-session feature checks above supersede the earlier pending core acceptance notes.
+
+---
 # Validation record — 2026-11-11
 
 ## Automated evidence
@@ -73,4 +84,7 @@ Shared flat controls replace system button/scrollbar chrome. Hourly navigation u
 The application harness passed 13/13 after adapting actual size/asset/tab and detail-scale assertions. Actual WPF fixture rendering produced four 130x67 compact previews and two 330x243 expanded previews under artifacts/previews. Root inspected rain, sun, long-name/negative-temperature and hourly/daily scenes; moved the footer inside the painted asset edge. These are offscreen fixtures, not live readings or desktop input tests. Packaged v0.1.3 built without warnings/errors and was launched; native compact rectangle is 130x67. Owner movement/resize and visual confirmation remain pending.
 
 v0.1.3 executable SHA-256: AE9B563D1683215D6BF5BBB324F51141B637AE36F30555218B4BDD202FF70FAC.
+
+
+Owner confirmed v0.1.3: layout is consistent, detailed-window header movement works, and proportional resizing works for both windows. This verifies the owner-reported oversized/inconsistent/immovable layout issues are resolved in the packaged app. Win+D and virtual-desktop checks remain pending.
 

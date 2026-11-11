@@ -1,6 +1,6 @@
 # WeatherWidget plan
 
-Status: owner approved, 2026-11-11. Implementation active.
+Status: v0.1.3 implemented and owner-verified in the target Windows session, 2026-11-11. Broader compatibility coverage is recorded separately in docs/validation.md.
 Project: D:\Development\WeatherWidget; private GitHub repository mgracanin/WeatherWidget.
 Tasks: tasks/todo.md. Development/model policy: AGENTS.md.
 
