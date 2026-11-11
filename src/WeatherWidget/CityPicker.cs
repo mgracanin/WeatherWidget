@@ -10,7 +10,7 @@ internal sealed class CityPicker : Window
 {
     private readonly WeatherClient client;
     private readonly string language;
-    private readonly TextBox query = new() { MinWidth = 330, Margin = new Thickness(0, 10, 8, 8), FontSize = 16 };
+    private readonly TextBox query = new() { MinWidth = 330, MaxLength = 120, Margin = new Thickness(0, 10, 8, 8), FontSize = 16 };
     private readonly ListBox results = new() { MinHeight = 200, Margin = new Thickness(0, 4, 0, 8) };
     private readonly TextBlock status = new() { TextWrapping = TextWrapping.Wrap };
     private readonly DispatcherTimer debounce = new() { Interval = TimeSpan.FromMilliseconds(400) };
@@ -46,28 +46,39 @@ internal sealed class CityPicker : Window
             if (e.Key == Key.Escape) { Close(); e.Handled = true; }
             else if (e.Key == Key.Enter) { if (results.SelectedItem != null) Choose(); else await SearchAsync(); e.Handled = true; }
         };
-        Closed += (_, _) => { closed = true; debounce.Stop(); search?.Cancel(); search?.Dispose(); };
+        Closed += (_, _) => { closed = true; debounce.Stop(); search?.Cancel(); };
         Loaded += (_, _) => { query.Text = currentCity; query.SelectAll(); query.Focus(); };
     }
     private async Task SearchAsync()
     {
-        debounce.Stop(); search?.Cancel(); search?.Dispose(); search = new CancellationTokenSource();
-        var own = search; var ownGeneration = ++generation;
+        debounce.Stop();
+        search?.Cancel();
+        var ownGeneration = ++generation;
         results.Items.Clear();
-        if (query.Text.Trim().Length < 2) { status.Text = T("Unesite barem dva znaka.", "Enter at least two characters."); return; }
+        var searchText = query.Text.Trim();
+        if (searchText.Length < 2) { status.Text = T("Unesite barem dva znaka.", "Enter at least two characters."); return; }
+        var own = new CancellationTokenSource(TimeSpan.FromSeconds(25));
+        search = own;
         status.Text = T("Pretraživanje…", "Searching…");
         try
         {
-            var found = await client.SearchAsync(query.Text.Trim(), UiText.Resolve(language), own.Token);
+            var found = await client.SearchAsync(searchText, UiText.Resolve(language), own.Token);
             if (closed || ownGeneration != generation) return;
             foreach (var city in found)
                 results.Items.Add(new ListBoxItem { Content = string.Join(", ", new[] { city.Name, city.Region, city.Country }.Where(s => !string.IsNullOrWhiteSpace(s))), Tag = city, Padding = new Thickness(5, 7, 5, 7) });
             status.Text = found.Count == 0 ? T("Nema rezultata. Pokušajte s drugim nazivom.", "No results. Try another name.") : T("Odaberite grad i regiju.", "Choose the city and region.");
             if (found.Count > 0) results.SelectedIndex = 0;
         }
+        catch (OperationCanceledException) when (!closed && ownGeneration == generation)
+        { status.Text = T("Pretraživanje je isteklo. Pokušajte ponovno.", "Search timed out. Try again."); }
         catch (OperationCanceledException) { }
-        catch (Exception ex) when (ex is HttpRequestException or System.Text.Json.JsonException or InvalidDataException)
+        catch (Exception ex) when (ex is HttpRequestException or System.Text.Json.JsonException or InvalidDataException or IOException)
         { if (!closed && ownGeneration == generation) status.Text = T("Pretraživanje nije uspjelo: ", "Search failed: ") + ex.Message; }
+        finally
+        {
+            if (ReferenceEquals(search, own)) search = null;
+            own.Dispose();
+        }
     }
     private void Choose()
     {

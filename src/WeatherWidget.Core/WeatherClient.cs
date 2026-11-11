@@ -34,7 +34,7 @@ public sealed class WeatherClient : IDisposable
             ["current"] = "temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day",
             ["hourly"] = "temperature_2m,precipitation_probability,weather_code,is_day",
             ["daily"] = "temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max",
-            ["forecast_days"] = "7",
+            ["forecast_days"] = "5",
             ["timeformat"] = "unixtime",
             ["timezone"] = "auto"
         }.Select(pair => $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
@@ -42,7 +42,7 @@ public sealed class WeatherClient : IDisposable
         using var response = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(response, cancellationToken).ConfigureAwait(false);
         using var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false), cancellationToken: cancellationToken).ConfigureAwait(false);
-        var root = document.RootElement;
+        var root = RequiredRootObject(document.RootElement, "forecast");
         var timeZone = RequiredString(root, "timezone");
         TimeZoneInfo zone;
         try { zone = TimeZoneInfo.FindSystemTimeZoneById(timeZone); }
@@ -99,15 +99,17 @@ public sealed class WeatherClient : IDisposable
         using var response = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(response, cancellationToken).ConfigureAwait(false);
         using var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false), cancellationToken: cancellationToken).ConfigureAwait(false);
-        if (!document.RootElement.TryGetProperty("results", out var results) || results.ValueKind == JsonValueKind.Null) return Array.Empty<WeatherLocation>();
+        var root = RequiredRootObject(document.RootElement, "geocoding");
+        if (!TryGetProperty(root, "results", out var results) || results.ValueKind == JsonValueKind.Null) return Array.Empty<WeatherLocation>();
         if (results.ValueKind != JsonValueKind.Array) throw new InvalidDataException("Open-Meteo geocoding results must be an array.");
         var found = new List<WeatherLocation>();
         foreach (var result in results.EnumerateArray())
         {
+            if (result.ValueKind != JsonValueKind.Object) continue;
             var name = RequiredString(result, "name");
             var latitude = RequiredDouble(result, "latitude");
             var longitude = RequiredDouble(result, "longitude");
-            ValidateCoordinates(latitude, longitude);
+            ValidateProviderCoordinates(latitude, longitude);
             found.Add(new WeatherLocation(name, latitude, longitude, OptionalString(result, "admin1"), OptionalString(result, "country")));
         }
         return found;
@@ -132,6 +134,12 @@ public sealed class WeatherClient : IDisposable
         if (!double.IsFinite(longitude) || longitude is < -180 or > 180) throw new ArgumentOutOfRangeException(nameof(longitude));
     }
 
+    private static void ValidateProviderCoordinates(double latitude, double longitude)
+    {
+        if (!double.IsFinite(latitude) || latitude is < -90 or > 90 || !double.IsFinite(longitude) || longitude is < -180 or > 180)
+            throw new InvalidDataException("Open-Meteo returned coordinates outside the valid latitude/longitude range.");
+    }
+
     private static void ValidateProbability(int value, string field)
     {
         if (value is < 0 or > 100) throw new InvalidDataException($"{field} must be between 0 and 100.");
@@ -145,21 +153,30 @@ public sealed class WeatherClient : IDisposable
 
     private static JsonElement RequiredObject(JsonElement element, string property)
     {
-        if (!element.TryGetProperty(property, out var value) || value.ValueKind != JsonValueKind.Object) throw new InvalidDataException($"Open-Meteo response is missing object '{property}'.");
+        if (!TryGetProperty(element, property, out var value) || value.ValueKind != JsonValueKind.Object) throw new InvalidDataException($"Open-Meteo response is missing object '{property}'.");
         return value;
     }
-    private static string RequiredString(JsonElement element, string property) => element.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(value.GetString()) ? value.GetString()! : throw new InvalidDataException($"Open-Meteo response is missing string '{property}'.");
-    private static string? OptionalString(JsonElement element, string property) => element.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
-    private static double RequiredDouble(JsonElement element, string property) => element.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var number) && double.IsFinite(number) ? number : throw new InvalidDataException($"Open-Meteo response is missing numeric '{property}'.");
-    private static int RequiredInt(JsonElement element, string property) => element.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number) ? number : throw new InvalidDataException($"Open-Meteo response is missing integer '{property}'.");
-    private static long RequiredInt64(JsonElement element, string property) => element.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var number) ? number : throw new InvalidDataException($"Open-Meteo response is missing integer '{property}'.");
+    private static JsonElement RequiredRootObject(JsonElement root, string endpoint) => root.ValueKind == JsonValueKind.Object
+        ? root
+        : throw new InvalidDataException($"Open-Meteo {endpoint} response must be a JSON object.");
+    private static bool TryGetProperty(JsonElement element, string property, out JsonElement value)
+    {
+        if (element.ValueKind == JsonValueKind.Object) return element.TryGetProperty(property, out value);
+        value = default;
+        return false;
+    }
+    private static string RequiredString(JsonElement element, string property) => TryGetProperty(element, property, out var value) && value.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(value.GetString()) ? value.GetString()! : throw new InvalidDataException($"Open-Meteo response is missing string '{property}'.");
+    private static string? OptionalString(JsonElement element, string property) => TryGetProperty(element, property, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+    private static double RequiredDouble(JsonElement element, string property) => TryGetProperty(element, property, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var number) && double.IsFinite(number) ? number : throw new InvalidDataException($"Open-Meteo response is missing numeric '{property}'.");
+    private static int RequiredInt(JsonElement element, string property) => TryGetProperty(element, property, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number) ? number : throw new InvalidDataException($"Open-Meteo response is missing integer '{property}'.");
+    private static long RequiredInt64(JsonElement element, string property) => TryGetProperty(element, property, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var number) ? number : throw new InvalidDataException($"Open-Meteo response is missing integer '{property}'.");
     private static bool RequiredBool(JsonElement element, string property) => RequiredInt(element, property) switch { 0 => false, 1 => true, _ => throw new InvalidDataException($"Open-Meteo response field '{property}' must be 0 or 1.") };
     private static double[] RequiredDoubleArray(JsonElement element, string property) => GetArray(element, property, static item => item.ValueKind == JsonValueKind.Number && item.TryGetDouble(out var value) && double.IsFinite(value) ? value : throw new InvalidDataException("Expected finite numeric array item."));
     private static int[] RequiredIntArray(JsonElement element, string property) => GetArray(element, property, static item => item.ValueKind == JsonValueKind.Number && item.TryGetInt32(out var value) ? value : throw new InvalidDataException("Expected integer array item."));
     private static long[] RequiredInt64Array(JsonElement element, string property) => GetArray(element, property, static item => item.ValueKind == JsonValueKind.Number && item.TryGetInt64(out var value) ? value : throw new InvalidDataException("Expected integer timestamp array item."));
     private static T[] GetArray<T>(JsonElement element, string property, Func<JsonElement, T> convert)
     {
-        if (!element.TryGetProperty(property, out var value) || value.ValueKind != JsonValueKind.Array) throw new InvalidDataException($"Open-Meteo response is missing array '{property}'.");
+        if (!TryGetProperty(element, property, out var value) || value.ValueKind != JsonValueKind.Array) throw new InvalidDataException($"Open-Meteo response is missing array '{property}'.");
         return value.EnumerateArray().Select(convert).ToArray();
     }
     private static void RequireEqualLengths(string name, params int[] lengths)

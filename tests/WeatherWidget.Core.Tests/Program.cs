@@ -77,11 +77,17 @@ static async Task TestFetch()
     var request = handler.LastRequest!;
     True(request.Query.Contains("timeformat=unixtime", StringComparison.Ordinal));
     True(request.Query.Contains("timezone=auto", StringComparison.Ordinal));
-    True(request.Query.Contains("forecast_days=7", StringComparison.Ordinal));
+    True(request.Query.Contains("forecast_days=5", StringComparison.Ordinal));
 }
 
 static async Task TestInvalidData()
 {
+    foreach (var invalidRoot in new[] { "[]", "null", "\"not an object\"" })
+    {
+        using var client = new WeatherClient(new HttpClient(new FixtureHandler(_ => Ok(invalidRoot))));
+        await Throws<InvalidDataException>(() => client.FetchAsync(new WeatherLocation("Zagreb", 45, 16)));
+    }
+
     var missing = "{\"timezone\":\"Europe/Zagreb\"}";
     using (var client = new WeatherClient(new HttpClient(new FixtureHandler(_ => Ok(missing)))))
         await Throws<InvalidDataException>(() => client.FetchAsync(new WeatherLocation("Zagreb", 45, 16)));
@@ -128,6 +134,10 @@ static async Task TestCancellationAndCoordinates()
     using (var client = new WeatherClient(new HttpClient(handler)))
         await Throws<ArgumentOutOfRangeException>(() => client.FetchAsync(new WeatherLocation("invalid", 90.1, 16)));
     Equal(0, handler.RequestCount);
+
+    using (var client = new WeatherClient(new HttpClient(new FixtureHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(new StallingStream()) }))))
+    using (var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(50)))
+        await Throws<OperationCanceledException>(() => client.SearchAsync("Zagreb", "en", cancellation.Token));
 }
 
 static async Task TestLiveFixture()
@@ -181,6 +191,26 @@ static async Task TestSearch()
     Equal("Čakovec", places[0].Name);
     Equal("Međimurje", places[0].Region);
     Equal("Hrvatska", places[0].Country);
+
+    const string validResult = "{\"name\":\"Zagreb\",\"latitude\":45.815,\"longitude\":15.982}";
+    using (var mixedClient = new WeatherClient(new HttpClient(new FixtureHandler(_ => Ok("{\"results\":[null,1,\"bad\",true," + validResult + "]}")))))
+    {
+        var mixed = await mixedClient.SearchAsync("Zagreb", "en");
+        Equal(1, mixed.Count);
+        Equal("Zagreb", mixed[0].Name);
+    }
+
+    foreach (var invalidRoot in new[] { "[]", "null", "\"not an object\"" })
+    {
+        using var invalidClient = new WeatherClient(new HttpClient(new FixtureHandler(_ => Ok(invalidRoot))));
+        await Throws<InvalidDataException>(() => invalidClient.SearchAsync("Zagreb", "en"));
+    }
+
+    using (var nullResultsClient = new WeatherClient(new HttpClient(new FixtureHandler(_ => Ok("{\"results\":null}")))))
+        Equal(0, (await nullResultsClient.SearchAsync("Zagreb", "en")).Count);
+
+    using (var invalidCoordinatesClient = new WeatherClient(new HttpClient(new FixtureHandler(_ => Ok("{\"results\":[{\"name\":\"Bad\",\"latitude\":91,\"longitude\":16}]}")))))
+        await Throws<InvalidDataException>(() => invalidCoordinatesClient.SearchAsync("Zagreb", "en"));
 }
 
 static string ForecastJson(DateTimeOffset epoch, int hourlyCount, int dailyCount, string timeZone = "Europe/Zagreb", DateOnly? firstDay = null)
@@ -230,6 +260,30 @@ sealed class BlockingHandler : HttpMessageHandler
     {
         await Task.Delay(Timeout.Infinite, cancellationToken);
         throw new InvalidOperationException("Unreachable");
+    }
+}
+
+sealed class StallingStream : Stream
+{
+    public override bool CanRead => true;
+    public override bool CanSeek => false;
+    public override bool CanWrite => false;
+    public override long Length => throw new NotSupportedException();
+    public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+    public override void Flush() => throw new NotSupportedException();
+    public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+    public override void SetLength(long value) => throw new NotSupportedException();
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+    {
+        await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+        return 0;
+    }
+    public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+    {
+        await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+        return 0;
     }
 }
 
