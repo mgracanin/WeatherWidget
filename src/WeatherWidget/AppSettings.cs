@@ -11,6 +11,7 @@ public sealed class AppSettings
     public string WindUnit { get; set; } = "kmh";
     public string Theme { get; set; } = "modern";
     public double Scale { get; set; } = 1;
+    public double DetailScale { get; set; } = 1;
     public string Language { get; set; } = "system";
     public bool Locked { get; set; }
     public bool AlwaysOnTop { get; set; }
@@ -30,6 +31,7 @@ public sealed class AppSettings
             if (settings.Left is { } x && (!double.IsFinite(x) || Math.Abs(x) > 100000)) settings.Left = null;
             if (settings.Top is { } y && (!double.IsFinite(y) || Math.Abs(y) > 100000)) settings.Top = null;
             if (!double.IsFinite(settings.Scale) || settings.Scale < .5 || settings.Scale > 3) settings.Scale = 1;
+            if (!double.IsFinite(settings.DetailScale) || settings.DetailScale < .8 || settings.DetailScale > 2) settings.DetailScale = 1;
             settings.Language = settings.Language is "hr" or "en" or "system" ? settings.Language : "system";
             settings.TemperatureUnit = settings.TemperatureUnit is "fahrenheit" or "F" ? "fahrenheit" : "celsius";
             settings.WindUnit = settings.WindUnit switch { "ms" or "m/s" => "ms", "mph" => "mph", _ => "kmh" };

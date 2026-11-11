@@ -7,23 +7,23 @@ internal static class WeatherArt
     public static BitmapImage Background(int code, bool day, bool expanded)
     {
         string path;
-        if (!expanded) path = System.IO.Path.Combine("WinPrognoza", "slike", ConditionCatalog.Artwork(code, day));
+        var sky = code switch
+        {
+            0 => day ? "blue_sun" : "black_moon-full",
+            1 or 2 => day ? "blue_partly-cloudy" : "black_moon-full_partly-cloudy",
+            3 => "black_cloudy", 45 or 48 => "black_foggy",
+            56 or 57 or 66 or 67 or 96 or 99 => "black_hail",
+            51 or 53 or 55 or 61 or 63 or 65 => "black_rainy",
+            80 or 81 or 82 => "black_few-showers",
+            71 or 73 or 75 or 77 or 85 or 86 => "black_snow",
+            95 => "black_thunderstorm", _ => "loading"
+        };
+        if (!expanded && day && code is 0 or 1 or 2)
+            path = System.IO.Path.Combine("WinPrognoza", "slike", ConditionCatalog.Artwork(code, day));
         else
         {
-            var sky = code switch
-            {
-                0 => day ? "blue_sun" : "black_moon-full",
-                1 or 2 => day ? "blue_partly-cloudy" : "black_moon-full_partly-cloudy",
-                3 => day ? "gray_cloudy" : "black_cloudy",
-                45 or 48 => day ? "gray_foggy" : "black_foggy",
-                56 or 57 or 66 or 67 or 96 or 99 => day ? "gray_hail" : "black_hail",
-                51 or 53 or 55 or 61 or 63 or 65 => day ? "gray_rainy" : "black_rainy",
-                80 or 81 or 82 => day ? "gray_few-showers" : "black_few-showers",
-                71 or 73 or 75 or 77 or 85 or 86 => day ? "blue_snow" : "black_snow",
-                95 => day ? "gray_thunderstorm" : "black_thunderstorm",
-                _ => "loading"
-            };
-            path = System.IO.Path.Combine("WeatherGadget", sky == "loading" ? "undocked-loading.png" : "undocked_" + sky + ".png");
+            var prefix = expanded ? "undocked" : "docked";
+            path = System.IO.Path.Combine("WeatherGadget", sky == "loading" ? prefix + "-loading.png" : prefix + "_" + sky + ".png");
         }
         if (!Images.TryGetValue(path, out var image))
         {

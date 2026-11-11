@@ -199,6 +199,7 @@ public sealed partial class WidgetWindow : Window
     }
     private void BeginDrag(object sender, MouseButtonEventArgs e)
     {
+        if (UiChrome.IsInteractiveSource(e.OriginalSource as DependencyObject)) return;
         Native.GetCursorPos(out var point); dragOrigin=point;
         Native.GetWindowRect(handle, out dragBounds); moved=false;
         CaptureMouse(); e.Handled=true;

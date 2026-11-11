@@ -6,12 +6,12 @@ Standalone Windows 11 weather widget. Native C# / WPF on .NET 10, with no XWidge
 
 Open `artifacts/win-x64/WeatherWidget.exe` after building a portable release. Keep its `Assets` folder beside the executable. The self-contained x64 package includes its runtime; no SDK, XWidget, browser or API key is needed on the target PC.
 
-The widget runs in the notification area (system tray), without a taskbar button. Its sun/cloud icon is available as editable vector artwork under Assets/Brand. Drag the compact card to move it. Click without dragging to expand forecasts. Escape, the close button or clicking outside collapses the expanded view. Right-click the card or tray icon for settings. Double-click the tray icon or launch the app again to recover the existing widget. Exit through the menu. Startup with Windows is off by default and can be enabled/disabled in the menu.
+The widget runs in the notification area (system tray), without a taskbar button. Its sun/cloud icon is available as editable vector artwork under Assets/Brand. The compact card defaults to the original 130 x 67 size. Drag it to move it; use its lower-right grip or Ctrl+wheel to resize proportionally. Click without dragging to expand forecasts. The detail view defaults to 330 x 243, uses the matching larger background, and can be moved by its header and resized from its lower-right grip. Both sizes are saved. Escape, the close button or clicking outside collapses the expanded view. Right-click the card or tray icon for settings. Double-click the tray icon or launch the app again to recover the existing widget. Exit through the menu. Startup with Windows is off by default and can be enabled/disabled in the menu.
 
 ## Features
 
 - Modern and Classic compact themes. Weather scenes form the complete background, preserving the original card proportions.
-- Larger weather-scene background in the expanded view, with hourly and five-day forecast tabs.
+- Larger weather-scene background in the expanded view, with hourly and five-day forecast tabs, consistent flat controls, arrow navigation and horizontal mouse-wheel scrolling.
 - Current temperature, condition, feels-like, humidity, wind, daily high/low and precipitation probabilities.
 - City search with country/region choices; selected city's local timestamps.
 - Croatian/English with Windows default and manual selection; Celsius/Fahrenheit and wind units.

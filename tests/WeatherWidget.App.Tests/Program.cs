@@ -18,7 +18,7 @@ internal static class Program
     private static string fixture = "";
 
     [STAThread]
-    private static void Main()
+    private static void Main(string[] args)
     {
         fixture = File.ReadAllText(FixturePath);
         var dispatcher = Dispatcher.CurrentDispatcher;
@@ -26,7 +26,9 @@ internal static class Program
         var exitCode = 0;
         dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(async () =>
         {
-            try { exitCode = await RunAll(); }
+            try { exitCode = args.Contains("--render-previews", StringComparer.OrdinalIgnoreCase)
+                    ? await PreviewRenderer.RenderAsync(fixture)
+                    : await RunAll(); }
             catch (Exception exception) { Console.Error.WriteLine($"Harness error: {exception}"); exitCode = 1; }
             dispatcher.BeginInvokeShutdown(DispatcherPriority.Normal);
         }));
@@ -229,6 +231,7 @@ internal static class Program
         settings.WindUnit = "mph";
         settings.Theme = "classic";
         settings.Scale = 1.75;
+        settings.DetailScale = 1.35;
         settings.Language = "hr";
         settings.Locked = true;
         settings.AlwaysOnTop = true;
@@ -247,6 +250,7 @@ internal static class Program
         Equal("mph", loaded.WindUnit);
         Equal("classic", loaded.Theme);
         Equal(1.75, loaded.Scale);
+        Equal(1.35, loaded.DetailScale);
         Equal("hr", loaded.Language);
         True(loaded.Locked && loaded.AlwaysOnTop && loaded.StartWithWindows);
         Equal(-2560d, loaded.Left);
@@ -271,6 +275,7 @@ internal static class Program
         Equal(45.81444, settings.Latitude);
         Equal(15.97798, settings.Longitude);
         Equal(1d, settings.Scale);
+        Equal(1d, settings.DetailScale);
         Equal("modern", settings.Theme);
         Equal(1, logs.Count);
     }
@@ -282,7 +287,7 @@ internal static class Program
         workspace.EnsureDirectory();
         var logs = new List<string>();
         await File.WriteAllTextAsync(path, """
-            {"CityName":null,"TemperatureUnit":"kelvin","WindUnit":"feet","Theme":"dark","Scale":4,"Language":"de","Left":-100001,"Top":null,"Latitude":91,"Longitude":16}
+            {"CityName":null,"TemperatureUnit":"kelvin","WindUnit":"feet","Theme":"dark","Scale":4,"DetailScale":2.5,"Language":"de","Left":-100001,"Top":null,"Latitude":91,"Longitude":16}
             """);
         var invalid = AppSettings.Load(path, logs.Add);
         Equal("Zagreb", invalid.CityName);
@@ -292,6 +297,7 @@ internal static class Program
         Equal("kmh", invalid.WindUnit);
         Equal("modern", invalid.Theme);
         Equal(1d, invalid.Scale);
+        Equal(1d, invalid.DetailScale);
         Equal("system", invalid.Language);
         True(invalid.Left is null && invalid.Top is null);
 
@@ -312,6 +318,10 @@ internal static class Program
             Equal(item.Language, valid.Language);
         }
         Equal(0, logs.Count);
+        await File.WriteAllTextAsync(path, "{\"DetailScale\":0.8}");
+        Equal(.8, AppSettings.Load(path, logs.Add).DetailScale);
+        await File.WriteAllTextAsync(path, "{\"DetailScale\":2}");
+        Equal(2d, AppSettings.Load(path, logs.Add).DetailScale);
     }
 
     private static async Task ForecastLayoutAndAssets()
@@ -331,9 +341,15 @@ internal static class Program
             largeAssets.Add(large.UriSource.LocalPath);
         }
         True(smallAssets.Count > 1 && largeAssets.Count > 1, $"Expected mapped backgrounds, found {smallAssets.Count} small and {largeAssets.Count} large assets.");
-        var largeBackground = WeatherArt.Background(0, true, expanded: true);
+        var compactBackground = WeatherArt.Background(3, false, expanded: false);
+        var largeBackground = WeatherArt.Background(3, false, expanded: true);
+        Equal("docked_black_cloudy.png", Path.GetFileName(compactBackground.UriSource!.LocalPath));
+        Equal(130, compactBackground.PixelWidth);
+        Equal(67, compactBackground.PixelHeight);
+        Equal("undocked_black_cloudy.png", Path.GetFileName(largeBackground.UriSource!.LocalPath));
         Equal(264, largeBackground.PixelWidth);
         Equal(194, largeBackground.PixelHeight);
+        await PreviewRenderer.VerifyCompactCardLayoutAsync(fixture);
 
         var source = await BuildFixtureSnapshot();
         var now = DateTimeOffset.UtcNow;
@@ -348,32 +364,46 @@ internal static class Program
         var window = new ForecastWindow();
         try
         {
+            Equal(330d, window.Width);
+            Equal(242.5d, window.Height);
             window.Update(currentSnapshot, "en", "F", "mph", isOffline: true, lastError: null);
             var viewbox = (Viewbox)window.Content;
             var scene = (Canvas)viewbox.Child;
-            viewbox.Measure(new Size(528, 388));
-            viewbox.Arrange(new Rect(0, 0, 528, 388));
+            viewbox.Measure(new Size(window.Width, window.Height));
+            viewbox.Arrange(new Rect(0, 0, window.Width, window.Height));
             viewbox.UpdateLayout();
-            Equal(528d, scene.Width);
-            Equal(388d, scene.Height);
-            var background = scene.Children.OfType<Image>().First();
+            Equal(330d, scene.Width);
+            Equal(242.5d, scene.Height);
+            var content = scene.Children.OfType<Canvas>().Single();
+            var background = content.Children.OfType<Image>().Single();
+            Equal(330d, background.Width);
+            Equal(242.5d, background.Height);
             Equal(264, ((System.Windows.Media.Imaging.BitmapSource)background.Source).PixelWidth);
             Equal(194, ((System.Windows.Media.Imaging.BitmapSource)background.Source).PixelHeight);
-            var scroll = scene.Children.OfType<ScrollViewer>().Single();
+            var scroll = content.Children.OfType<ScrollViewer>().Single();
             Equal(12, ((StackPanel)scroll.Content).Children.Count);
             var labels = CollectText(scene);
             True(labels.Contains("°F", StringComparison.Ordinal), "Temperature unit label missing.");
             True(labels.Contains("mph", StringComparison.Ordinal), "Wind unit label missing.");
-            True(labels.Contains("OFFLINE", StringComparison.Ordinal), "Offline label missing.");
+            True(labels.Contains("Offline", StringComparison.Ordinal), "Offline label missing.");
             True(labels.Contains("Next 12 hours", StringComparison.Ordinal), "Hourly view control missing.");
             True(labels.Contains("5-day forecast", StringComparison.Ordinal), "Daily view control missing.");
 
-            var dailyButton = scene.Children.OfType<Button>().Single(button => AutomationProperties.GetName(button) == "Show daily forecast");
+            var dailyButton = content.Children.OfType<Button>().Single(button => AutomationProperties.GetName(button) == "Daily forecast");
             dailyButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent, dailyButton));
-            scroll = scene.Children.OfType<ScrollViewer>().Single();
-            Equal(5, ((StackPanel)scroll.Content).Children.Count);
+            var dailyColumns = content.Children.OfType<StackPanel>().Single();
+            Equal(5, dailyColumns.Children.Count);
         }
-        finally { window.Close(); }
+        finally { window.RequestClose(); }
+
+        var scaled = new ForecastWindow(new AppSettings { DetailScale = 1.5 });
+        try
+        {
+            Equal(495d, scaled.Width);
+            Equal(363.75d, scaled.Height);
+            Equal(330d / 242.5d, scaled.Width / scaled.Height);
+        }
+        finally { scaled.RequestClose(); }
     }
 
     private static Task EmbeddedIconFrames()

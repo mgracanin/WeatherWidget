@@ -58,3 +58,19 @@ Fix: tray ICO is an embedded assembly resource, cloned independently of its sour
 
 v0.1.2 executable SHA-256: 492B24A190A1C7B3F7A9B457065A935815D29FF6338FE14E73AA41908DB137AB.
 
+
+Owner confirmed v0.1.2 stays running after repeated forecast open/close operations (close button and outside-click test) and the custom sun/cloud tray icon is visible. This verifies the reported forecast-close crash and missing tray icon fixes in the actual packaged application.
+
+
+## v0.1.3 layout and manipulation corrections
+
+Owner screenshot identified oversized default compact view, mismatched compact/expanded backgrounds, a standard white scrollbar among glass controls and a nonmovable expanded panel.
+
+Compact default is now 130x67 for both themes. Cloudy and other supported conditions pair docked_black_* and undocked_black_* artwork; day sun/partly compact scenes use the original supplied small card because matching small blue files are absent. Expanded default is 330 x (330*194/264). No supplied weather artwork was edited.
+
+Shared flat controls replace system button/scrollbar chrome. Hourly navigation uses arrows/wheel and whole columns; five-day entries fit in the panel. Both windows support proportional lower-right resize; compact also supports Ctrl+wheel. Main Scale and DetailScale persist separately. Expanded header drag ignores buttons/grips and suppresses auto-dismiss while moving/resizing; the v0.1.2 close guard is preserved.
+
+The application harness passed 13/13 after adapting actual size/asset/tab and detail-scale assertions. Actual WPF fixture rendering produced four 130x67 compact previews and two 330x243 expanded previews under artifacts/previews. Root inspected rain, sun, long-name/negative-temperature and hourly/daily scenes; moved the footer inside the painted asset edge. These are offscreen fixtures, not live readings or desktop input tests. Packaged v0.1.3 built without warnings/errors and was launched; native compact rectangle is 130x67. Owner movement/resize and visual confirmation remain pending.
+
+v0.1.3 executable SHA-256: AE9B563D1683215D6BF5BBB324F51141B637AE36F30555218B4BDD202FF70FAC.
+

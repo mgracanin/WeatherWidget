@@ -67,3 +67,6 @@ Modern default, 220 x 110; Classic available. Scale control. Win+D retains compa
 - https://learn.microsoft.com/en-us/dotnet/desktop/wpf/whats-new/net100
 
 Owner correction during implementation: full-scene backgrounds in compact and expanded views; preserve their proportions. Production application must be tray-only with no taskbar entry. Development inspection mode is excluded from Release.
+
+Owner layout correction: compact default is now the original 130 x 67 for both themes; pair docked_black_* with corresponding undocked_black_* weather backgrounds, using original compact sunny/partly artwork only where the paired small source is absent. Expanded default is330 x (330*194/264), with flat consistent controls. Both windows resize proportionally; expanded header is draggable. Main and detail scales persist separately. Existing weather images remain unchanged; additional generated themes are deferred.
+

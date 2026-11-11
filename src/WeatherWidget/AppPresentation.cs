@@ -54,7 +54,7 @@ public sealed partial class App
     {
         if (forecast != null) { CloseForecast(); return; }
         if (Weather.Snapshot == null) { ShowStatus(); return; }
-        var panel = new ForecastWindow();
+        var panel = new ForecastWindow(Settings);
         forecast = panel;
         panel.Closed += (_, _) => { if (ReferenceEquals(forecast, panel)) forecast = null; };
         PresentationChanged();
