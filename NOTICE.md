@@ -21,3 +21,5 @@ The Aurora, Paper, Sunset, Nordic and Forest scenes are drawn by this project's 
 .NET runtime components in a self-contained release remain under Microsoft's applicable .NET distribution notices and licenses.
 
 Optional IP location estimation: ipapi.co (https://ipapi.co/api/), requested only by the user. Service terms and availability are controlled by the provider. Windows location access uses the operating system permission controls.
+
+Windows 7 Professional OEM terms, section 3(c), permit using but not sharing the software icons, images, sounds and media while that software is running. They do not provide a general licence to bundle extracted artwork in another application. [Windows 7 licence terms](https://www.microsoft.com/content/dam/microsoft/usetm/documents/windows/7-professional/oem-pre-installed/Windows_7%20Professional_English.pdf).
