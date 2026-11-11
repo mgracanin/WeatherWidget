@@ -10,7 +10,7 @@ public sealed partial class WidgetWindow
     private WeatherSnapshot? renderedSnapshot;
     private CompactState? renderedState;
     private readonly record struct CompactState(string City, string Theme, string Language, string Unit,
-        double Scale, bool Offline, bool Loading, string? Error, bool Expired, string Freshness, int AgeMinute, string Rain);
+        double Scale, bool Offline, bool Loading, string? Error, bool Expired, string Freshness, int AgeMinute, string Rain, TemperatureTrendDirection Trend);
     private void InitializeCard()
     {
         PreviewMouseWheel += (_, e) =>
@@ -35,9 +35,11 @@ public sealed partial class WidgetWindow
         bool expired=data!=null && age>=TimeSpan.FromHours(6);
         string freshness=weather.Offline ? app.Text("Izvan mreže","Offline") : age>=TimeSpan.FromHours(1) ? app.Text("Zastarjelo","Stale") : weather.IsLoading ? app.Text("Osvježavanje…","Updating…") : "";
         string rain=data==null || weather.Offline ? "" : WeatherExtras.RainSoon(data,now,settings.Language);
+        var trend=data==null || weather.Offline ? TemperatureTrendDirection.Unknown : TemperatureTrend.Get(data,now);
+        string trendText=trend switch {TemperatureTrendDirection.Rising=>app.Text("Oko 3 h: temperatura raste","About 3 h: warming"),TemperatureTrendDirection.Falling=>app.Text("Oko 3 h: temperatura pada","About 3 h: cooling"),TemperatureTrendDirection.Steady=>app.Text("Oko 3 h: bez veće promjene temperature","About 3 h: temperature steady"),_=>""};
         var state=new CompactState(settings.CityName,settings.Theme,UiText.Resolve(settings.Language),settings.TemperatureUnit,
             settings.Scale,weather.Offline,weather.IsLoading,weather.Error,expired,freshness,
-            freshness.Length>0 ? Math.Max(0,(int)age.TotalMinutes) : 0,rain);
+            freshness.Length>0 ? Math.Max(0,(int)age.TotalMinutes) : 0,rain,trend);
         if (ReferenceEquals(renderedSnapshot,data) && renderedState==state) return;
         const double width=130, height=67;
         Width=width*settings.Scale; Height=height*settings.Scale;
@@ -53,6 +55,7 @@ public sealed partial class WidgetWindow
         Put(new Image { Source=WeatherArt.Background(data?.Current.WeatherCode??-1,data?.Current.IsDay??true,false,theme.Id), Width=width,Height=height,Stretch=Stretch.Uniform },0,0);
         var city=Label(settings.CityName,10,80); city.TextAlignment=TextAlignment.Right; city.FontWeight=FontWeights.SemiBold; Put(city,40,7);
         var temp=Label(temperature,23,78); temp.TextAlignment=TextAlignment.Right; temp.FontWeight=settings.Theme=="classic" ? FontWeights.SemiBold:FontWeights.Light; Put(temp,42,19);
+        if(trend!=TemperatureTrendDirection.Unknown){var arrow=Label(trend switch {TemperatureTrendDirection.Rising=>"↑",TemperatureTrendDirection.Falling=>"↓",_=>"→"},12,15);arrow.ToolTip=trendText;Put(arrow,27,29);}
         status=Label(freshness.Length>0 ? freshness:rain.Length>0 ? app.Text("Kiša uskoro","Rain soon"):condition,8.5,108); Put(status,8,49);
         var grip=UiChrome.ResizeGrip(app.Text("Povucite za veličinu · Ctrl+kotačić","Drag to resize · Ctrl+wheel"),theme.ForegroundBrush);
         grip.Width=10; grip.Height=10;
@@ -69,6 +72,7 @@ public sealed partial class WidgetWindow
             TimeZoneInfo.ConvertTime(data.Current.TimeUtc,TimeZoneInfo.FindSystemTimeZoneById(data.TimeZoneId)).ToString("g",UiText.Culture(settings.Language));
         var day=data?.Daily.FirstOrDefault();
         ToolTip=settings.CityName+" · "+temperature+" · "+condition+(day==null ? "":"\n↑ "+Temp(day.HighC)+"   ↓ "+Temp(day.LowC))+sourceTime+
+            (trendText.Length==0 ? "":"\n"+trendText)+
             (rain.Length==0 ? "":"\n"+rain+app.Text(" · satna prognoza ≥60%"," · hourly forecast ≥60%"))+
             (freshness.Length==0 ? "":"\n"+freshness+" · "+Math.Max(0,(int)age.TotalMinutes)+" min")+
             (weather.Error==null ? "":"\n"+weather.Error)+"\nOpen-Meteo · CC BY 4.0\n"+

@@ -1,61 +1,105 @@
-# WeatherWidget
+<p align="center">
+  <img src="Assets/Brand/weather-widget-512.png" alt="WeatherWidget icon" width="80">
+</p>
 
-Standalone Windows 11 weather widget. Native C# / WPF on .NET 10, with no XWidget dependency or AI-model calls.
+<h1 align="center">WeatherWidget</h1>
 
-## Run
+<p align="center">
+  A little weather for your Windows desktop.
+</p>
 
-Open `artifacts/win-x64/WeatherWidget.exe` after building a portable release. Keep its `Assets` folder beside the executable. The self-contained x64 package includes its runtime; no SDK, XWidget, browser or API key is needed on the target PC.
+<p align="center">
+  <img src="https://img.shields.io/badge/platform-Windows%2011-0078D4?logo=windows11&logoColor=white" alt="Windows 11">
+  <img src="https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white" alt=".NET 10">
+  <img src="https://img.shields.io/badge/AI-none%20at%20runtime-555" alt="No AI services at runtime">
+</p>
 
-The widget runs in the notification area (system tray), without a taskbar button. Its sun/cloud icon is available as editable vector artwork under Assets/Brand. The compact card defaults to the original 130 x 67 size. Drag it to move it; use its lower-right grip or Ctrl+wheel to resize proportionally. Click without dragging to expand forecasts. The detail view defaults to 330 x 243, uses the matching larger background, and can be moved by its header and resized from its lower-right grip. Both sizes are saved. Escape, the close button or clicking outside collapses the expanded view. Right-click the card or tray icon for settings. Double-click the tray icon or launch the app again to recover the existing widget. Exit through the menu. Startup with Windows is off by default and can be changed in Settings → Desktop.
+I got used to the little weather widgets on Windows 7, and for years I used XWidget for my forecast. When the old weather service stopped working, I decided to make a standalone widget for Windows 11. This is the result: a small Windows desktop companion built with C#, WPF and .NET 10. And no AI services at runtime—just the weather.
 
+## Preview
+
+Theme previews with sample weather. Backgrounds change with the weather and time of day.
+
+| Modern | Classic | Aurora |
+| --- | --- | --- |
+| ![Modern theme, sample rain](docs/images/modern-rain.png) | ![Classic theme, sample sun](docs/images/classic-sun.png) | ![Aurora theme, sample rain](docs/images/aurora-rain.png) |
+| Paper | Sunset | Nordic |
+| ![Paper theme, sample sun](docs/images/paper-sun.png) | ![Sunset theme, sample night](docs/images/sunset-night.png) | ![Nordic theme, sample snow](docs/images/nordic-snow.png) |
+
+Forest is shown with a sample temperature trend:
+
+![Forest theme with a sample temperature trend](docs/images/forest-trend.png)
+
+Click the card for hourly and five-day forecasts:
+
+<img src="docs/images/forecast.png" alt="Expanded Forest forecast with sample weather" width="330">
 ## Features
 
-- Seven selectable themes: Modern, Classic, Aurora, Paper, Sunset, Nordic and Forest. The five newer themes use cached, scalable vector artwork. Weather scenes form the complete background, preserving the original card proportions.
-- Larger weather-scene background in the expanded view, with hourly and five-day forecast tabs, consistent flat controls, arrow navigation and horizontal mouse-wheel scrolling.
-- Current temperature, condition, feels-like, humidity, wind, daily high/low and precipitation probabilities.
-- City search with country/region choices; selected city's local timestamps.
-- Croatian/English with Windows default and manual selection; Celsius/Fahrenheit and wind units.
-- Saved theme, scale, city and position; lock position, optional always-on-top and tray recovery.
-- Normal refresh every 15 minutes, bounded retries, network/resume refresh and labelled offline cache. Old current weather is marked stale after an hour and suppressed after six hours. Past cached forecasts are not presented as upcoming.
+- **Seven themes:** Modern, Classic, Aurora, Paper, Sunset, Nordic and Forest.
+- **Small card, expanded forecast:** a 130 × 67 card that expands to a 330 × 243 forecast view. Drag to move; resize from the lower-right corner. It stays out of the taskbar and can be recovered from the tray.
+- **Forecasts at a glance:** current conditions, hourly forecast for the next 12 hours and a five-day forecast.
+- **Useful details:** feels-like temperature, humidity, wind, daily high and low, precipitation chance, and a three-hour temperature trend. The trend is hidden when data is stale, offline or unavailable.
+- **Locations:** search for a city and save up to ten locations. Only the active location is fetched.
+- **Optional location discovery:** ask Windows for a one-time location or request an approximate city from ipapi.co. Both actions are explicit; review the result and choose Apply to use it. There is no automatic fallback or background location tracking.
+- **Settings:** choose Croatian or English, temperature and wind units, appearance, desktop behavior and optional weather notifications. Settings changes support Apply and Cancel; notifications and startup with Windows are off by default.
+- **Rain and weather reminders:** a rain-soon indicator plus optional rain, frost-risk and strong-wind notifications. Choose quiet hours in Settings; repeated reminders are limited to one per type per six hours.
+- **Desktop controls:** lock the card, snap it to monitor work-area edges, choose always-on-top, or opt into startup with Windows.
+- **Quiet background behavior:** designed for low background use with software rendering. Weather updates use Open-Meteo; no ads, AI services or background location tracking.
 
-Default city: Zagreb. Settings, cache and rotating diagnostic log are in `%LOCALAPPDATA%/WeatherWidget`. Deleting that folder while the app is closed resets preferences. No precise geolocation is requested; city coordinates are sent to Open-Meteo for the chosen forecast.
+## Getting started
 
-## Desktop compatibility
+Download the latest portable Windows x64 build from [Releases](https://github.com/mgracanin/WeatherWidget/releases/latest), extract it, and run `WeatherWidget.exe`. Keep the `Assets` folder beside the executable. The package includes the .NET runtime, so the target PC does not need the .NET SDK or XWidget installed.
 
-Default desktop mode keeps the card as a top-level transparent popup owned by the desktop shell, behind ordinary application windows. The earlier wallpaper-child implementation failed visibility testing and has been replaced. Shell-owned Win+D/virtual-desktop behavior still requires compatibility checks on Windows updates. Tray recovery briefly lifts the card into view without changing the always-on-top preference. Always-on-top intentionally uses a different window layer.
+The widget starts in the notification area. Right-click it or its tray icon to open Settings and other quick actions. Startup with Windows is optional and off by default.
 
-The exact Windows validation evidence and any remaining gaps are recorded in `docs/validation.md`. Compilation and fixture tests alone do not establish shell behavior on every Windows build or display setup.
+## Make it yours
 
-## Develop
+Open **Settings…** from the card or tray menu:
 
-Use .NET 10 SDK, or the local SDK in `tools/dotnet` (excluded from Git):
+| Section | What you can change |
+| --- | --- |
+| **Location & units** | Search cities, manage saved locations, discover a location, choose temperature/wind units and language. |
+| **Appearance** | Preview all seven themes and adjust compact/forecast sizes independently. |
+| **Desktop** | Lock position, snap to edges, stay on top, or start with Windows. |
+| **Notifications** | Enable weather reminders and set quiet hours in your computer's local time. |
+
+**Apply** saves and updates the widget. **Save and close** also closes Settings. **Cancel**, Escape or × discards edits since the last Apply. Preferences, the selected location and saved locations are restored on the next run. Data is stored in `%LOCALAPPDATA%\WeatherWidget`.
+
+| Action | Result |
+| --- | --- |
+| Click the card | Open or close the forecast. |
+| Drag the card | Move it; its position is remembered. |
+| Drag a lower-right corner | Resize either window proportionally. |
+| Ctrl + mouse wheel over the card | Adjust the compact size. |
+| Drag the forecast header | Move the detailed window. |
+| Escape, × or click outside the forecast | Close the forecast. |
+| Double-click the tray icon | Recover the card on screen. |
+| Right-click → Exit | Quit completely. |
+
+Weather normally refreshes every 15 minutes. Network failures keep the last forecast with an offline label; older current readings are marked stale and eventually hidden. The trend arrow describes roughly three hours ahead: **↑ warming**, **↓ cooling**, **→ steady**. It is omitted when fresh forecast data is unavailable.
+## Weather data and location privacy
+
+Forecasts and city search use [Open-Meteo](https://open-meteo.com/). The selected city's coordinates are sent to the forecast service. City search uses Open-Meteo's geocoding service, based on GeoNames. See [NOTICE.md](NOTICE.md) for provider terms and artwork ownership information.
+
+Location discovery does not run at startup or in the background. Windows discovery uses its permission controls. IP-based estimation contacts [ipapi.co](https://ipapi.co/) only when you choose that action; VPNs and ISP routing can make the estimate inaccurate. Discovery results are drafts until you apply them. See the [location guide](docs/locations.md) for permission help and method details.
+
+## Build from source
+
+You need Windows and the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0). Clone the repository and run:
 
 ```powershell
+git clone https://github.com/mgracanin/WeatherWidget.git
+cd WeatherWidget
 .\build.ps1 -Test -Publish
 ```
 
-For a development apphost, set `DOTNET_ROOT` to the local `tools/dotnet` folder and launch `bin/Debug/net10.0-windows/WeatherWidget.exe`. Launching a DLL through `dotnet.exe` bypasses the application manifest's DPI settings and can prevent desktop attachment. Debug builds have an explicit `--inspect` window for UI testing; Release ignores it and remains tray-only. `--exit` gracefully stops the running instance.
+The script can also use a local SDK in `tools/dotnet` when available. The portable build is written under `artifacts/win-x64/`.
 
-The full feature plan and checklist are in `tasks/`; balanced model routing is in `AGENTS.md`. Build output, local settings and the SDK are excluded from Git. This is a private development repository; see `NOTICE.md` for resource ownership and provider attribution.
+For an ordinary development build or just the checks:
 
-## Efficiency and code review
+```powershell
+.\build.ps1
+.\build.ps1 -Test
+```
 
-See docs/review-and-performance.md for fixed review findings, measured before/after managed-allocation and layout results, and limits of resident-memory comparisons. Run scripts/BenchmarkRender.ps1 to reproduce the controlled fixture benchmark. Normal minute ticks retain unchanged visual trees; no production forced-GC or working-set trimming is used.
-
-### Lightweight extras (v0.3.0)
-
-Seven selectable themes now include **Nordic** and **Forest**, alongside Modern, Classic, Aurora, Paper and Sunset. All use weather-aware backgrounds.
-
-The compact card can show **Rain soon**; hover it for the hourly estimate. Hover the tray icon for temperature, feels-like and rain/offline status. **Snap to screen edges** is on by default and can be disabled in Settings → Desktop.
-
-Enable **Weather notifications** in Settings → Notifications for rain-soon, frost-risk and strong-wind reminders. Notifications default off. **Quiet hours** use your computer's local time (22:00–07:00 by default); start/end hours are editable, or quiet hours can be turned off. Repeated reminders are limited to once per type per six hours for the active location, including across restarts. Windows notification settings may suppress them. These are weather reminders, not official emergency alerts.
-
-These features reuse existing weather downloads and refresh timers. See [feature behavior and checks](docs/lightweight-features.md).
-
-### Settings window (v0.4.0)
-
-Right-click the card or tray icon and choose **Settings…**. Preferences are grouped into Location & units, Appearance (including theme preview), Desktop and Notifications. The context menu keeps only quick actions.
-
-**Apply** saves to disk and updates the widget. **Save and close** does the same and closes Settings. **Cancel**, Escape or × discards changes since the last Apply. Saved preferences load automatically on the next launch from `%LOCALAPPDATA%/WeatherWidget/settings.json`. Moving the card or sending reminders while Settings is open does not get overwritten by applying an older draft. A save/startup-registration failure is shown rather than reported as success. Reopen Settings after changing language to translate its controls.
-
-Settings is created only when opened, reused if already open, and released on close; it adds no background timer or network request. City search runs only when you open the city picker.
+The tests use local weather/location fixtures and do not request your Windows location, contact the IP provider, or change your saved preferences. The Windows API integration builds automatically; no Windows App SDK application or XWidget installation is required.

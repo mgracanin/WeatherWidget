@@ -30,7 +30,8 @@ public sealed partial class App
         bool fahrenheit=settings.TemperatureUnit=="fahrenheit";
         string Temp(double c)=>(fahrenheit?c*9/5+32:c).ToString("0",UiText.Culture(settings.Language))+"°"+(fahrenheit?"F":"C");
         string state=offline ? UiText.T(settings.Language,"Izvan mreže","Offline") : !WeatherExtras.IsFresh(data,now) ? UiText.T(settings.Language,"Zastarjelo","Stale") : WeatherExtras.RainSoon(data,now,settings.Language);
-        string text=$"{city} · {Temp(data.Current.TemperatureC)}\n"+UiText.T(settings.Language,"Osjet ","Feels ")+Temp(data.Current.FeelsLikeC)+(state.Length>0?"\n"+state:"");
+        string arrow=offline ? "" : TemperatureTrend.Get(data,now) switch {TemperatureTrendDirection.Rising=>" ↑",TemperatureTrendDirection.Falling=>" ↓",TemperatureTrendDirection.Steady=>" →",_=>""};
+        string text=$"{city} · {Temp(data.Current.TemperatureC)}{arrow}\n"+UiText.T(settings.Language,"Osjet ","Feels ")+Temp(data.Current.FeelsLikeC)+(state.Length>0?"\n"+state:"");
         // The conservative legacy shell limit also works on modern Windows.
         return text[..Math.Min(63,text.Length)];
     }

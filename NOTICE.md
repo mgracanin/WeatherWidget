@@ -6,6 +6,8 @@ Open-Meteo API documentation: https://open-meteo.com/en/docs
 Geocoding documentation: https://open-meteo.com/en/docs/geocoding-api
 The public free endpoint is for noncommercial use; a commercial distribution must review provider terms.
 
-Artwork was copied from the owner's existing Weather.Gadget and WinPrognoza folders. It retains its original ownership. No claim of a new license or redistribution rights is made for those assets. The repository and package are prepared for the owner's private use.
+The original Weather.Gadget and WinPrognoza artwork came from my existing installation and retains its original ownership. No new license or redistribution rights are claimed for those assets. This repository and its packages are for private use.
 
 .NET runtime components in a self-contained release remain under Microsoft's applicable .NET distribution notices and licenses.
+
+Optional IP location estimation: ipapi.co (https://ipapi.co/api/), requested only by the user. Service terms and availability are controlled by the provider. Windows location access uses the operating system permission controls.

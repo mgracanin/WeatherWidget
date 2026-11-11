@@ -80,6 +80,7 @@ internal static class PreviewRenderer
             new PreviewCase("paper-sun", "paper", "Split", 25.6, 0, true),
             new PreviewCase("sunset-night", "sunset", "Rijeka", 5.1, 2, false),
             new PreviewCase("nordic-snow", "nordic", "Oslo", -2.4, 71, true),
+            new PreviewCase("forest-trend", "forest", "Zagreb", 12.4, 3, true),
             new PreviewCase("forest-night", "forest", "Zagreb", 7.1, 61, false),
             new PreviewCase("modern-long-city-negative", "modern", "Gornji Grad – Medveščak i okolica (iznimno dugo ime)", -12.8, 71, false)
         };
@@ -186,6 +187,11 @@ internal static class PreviewRenderer
 
     private static async Task RenderWidgetAsync(App app, PreviewCase previewCase, WeatherSnapshot snapshot, string outputDirectory)
     {
+        if(previewCase.Name.EndsWith("trend",StringComparison.Ordinal))
+        {
+            var now=DateTimeOffset.UtcNow;
+            snapshot=snapshot with {FetchedAtUtc=now,Current=snapshot.Current with {TimeUtc=now},Hourly=new[]{snapshot.Hourly[0] with {TimeUtc=now.AddHours(3),TemperatureC=snapshot.Current.TemperatureC+2}}};
+        }
         var settings = new AppSettings
         {
             CityName = previewCase.City,
@@ -206,6 +212,7 @@ internal static class PreviewRenderer
         try
         {
             SetAppState(app, settings, controller);
+            if(previewCase.Name.EndsWith("trend",StringComparison.Ordinal))typeof(WeatherController).GetProperty("Offline")!.SetValue(controller,false);
             window = new WidgetWindow(app);
             window.UpdateWeatherPresentation();
             RenderContent(window.Content, window.Width, window.Height,
@@ -277,7 +284,7 @@ internal static class PreviewRenderer
     private static string FindRepositoryRoot()
     {
         for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory != null; directory = directory.Parent)
-            if (Directory.Exists(Path.Combine(directory.FullName, "Assets")) && File.Exists(Path.Combine(directory.FullName, "tasks", "plan.md")))
+            if (Directory.Exists(Path.Combine(directory.FullName, "Assets")) && File.Exists(Path.Combine(directory.FullName, "build.ps1")))
                 return directory.FullName;
         throw new DirectoryNotFoundException("Could not locate the WeatherWidget repository root.");
     }

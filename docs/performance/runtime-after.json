@@ -1,8 +1,0 @@
-{
-  "ObservationSeconds": 190.88,
-  "CpuSecondsDelta": 0.1094,
-  "PercentOfOneCpu": 0.0573,
-  "WorkingSetMB": 164.79,
-  "PrivateMB": 94.24,
-  "Note": "Fresh v0.2.0 warm-process observation; not directly comparable to aged v0.1.3"
-}

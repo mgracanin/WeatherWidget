@@ -88,7 +88,10 @@ internal static class Program
             ("bounded localized tray tooltip with units and offline status", ExtraChecks.TrayTooltip),
             ("all editor preferences persist without overwriting placement or alerts", SettingsChecks.Persistence),
             ("save/startup failures leave live settings unchanged and roll back registration", SettingsChecks.SaveFailures),
-            ("settings controls apply draft choices, cancel edits and retain failed saves", SettingsChecks.Editor)
+            ("settings controls apply draft choices, cancel edits and retain failed saves", SettingsChecks.Editor),
+            ("saved locations persist, normalize and isolate drafts; temperature trends respect freshness", LocationPreferenceChecks.Run),
+            ("IP discovery validates bounded HTTPS responses and respects Windows denial", LocationDiscoveryChecks.Provider),
+            ("discovery is explicit, drafts results and cancels on editor close", LocationDiscoveryChecks.Editor)
         };
         var failures = 0;
         foreach (var test in tests)

@@ -8,7 +8,7 @@ using WeatherWidget.Core;
 namespace WeatherWidget;
 
 /// <summary>Edits an isolated settings draft. The owner decides when that draft is applied.</summary>
-internal sealed class SettingsWindow : Window
+internal sealed partial class SettingsWindow : Window
 {
     private readonly AppSettings draft;
     private readonly WeatherClient client;
@@ -25,9 +25,9 @@ internal sealed class SettingsWindow : Window
     private readonly Image themePreview = new();
     private readonly TextBlock applyStatus = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 0), TextWrapping = TextWrapping.Wrap };
 
-    public SettingsWindow(AppSettings draft, WeatherClient client, Func<AppSettings, bool> apply, Action showStatus)
+    public SettingsWindow(AppSettings draft, WeatherClient client, Func<AppSettings, bool> apply, Action showStatus, ILocationDiscovery? discovery=null)
     {
-        this.draft = draft;
+        this.draft = draft; this.discovery=discovery;
         this.client = client;
         this.apply = apply;
         this.showStatus = showStatus;
@@ -40,6 +40,7 @@ internal sealed class SettingsWindow : Window
         ShowInTaskbar = false;
         FontFamily = new FontFamily("Segoe UI"); FontSize=13; Background=Brushes.White;
         SetWindowIcon();
+        Closed+=(_,_)=>{discoveryClosed=true;locationRequest?.Cancel();this.discovery?.Dispose();};
 
         var root = new DockPanel { Background=Brushes.White, Margin = new Thickness(20, 16, 20, 16), LastChildFill = true };
         var footer = new DockPanel { Margin = new Thickness(0, 14, 0, 0), LastChildFill = true };
@@ -86,14 +87,7 @@ internal sealed class SettingsWindow : Window
     private UIElement LocationPage()
     {
         var panel = PageStack();
-        panel.Children.Add(Section(T("Lokacija", "Location")));
-        var cityRow = new DockPanel { LastChildFill = false };
-        cityValue.Text = draft.CityName; cityValue.VerticalAlignment = VerticalAlignment.Center; cityValue.Margin = new Thickness(0, 0, 10, 0);
-        cityValue.TextTrimming = TextTrimming.CharacterEllipsis; cityValue.ToolTip = draft.CityName;
-        cityRow.Children.Add(cityValue);
-        var chooseCity = Button(T("Promijeni grad…", "Change city…"), (_, _) => PickCity());
-        DockPanel.SetDock(chooseCity, Dock.Right); cityRow.Children.Add(chooseCity);
-        panel.Children.Add(Labeled(T("Trenutačni grad", "Current city"), cityRow));
+        AddLocationControls(panel);
         panel.Children.Add(Section(T("Jedinice i jezik", "Units and language")));
         Fill(temperature, ("celsius", T("Celzijevi (°C)", "Celsius (°C)")), ("fahrenheit", T("Fahrenheit (°F)", "Fahrenheit (°F)")));
         temperature.SelectedValue = draft.TemperatureUnit;
@@ -165,13 +159,15 @@ internal sealed class SettingsWindow : Window
         var picker = new CityPicker(client, language, draft.CityName) { Owner = this };
         if (picker.ShowDialog() == true && picker.SelectedLocation is { } selected)
         {
+            currentLocationDetails=selected;
             draft.CityName = selected.Name; draft.Latitude = selected.Latitude; draft.Longitude = selected.Longitude;
-            cityValue.Text = selected.Name; cityValue.ToolTip = selected.Name;
+            ShowDraftLocation(); locationStatus.Text="";
         }
     }
 
     private bool ApplyDraft()
     {
+        if(locationRequest!=null){locationStatus.Text=T("Pričekajte završetak traženja lokacije.","Wait for location discovery to finish.");return false;}
         UpdateDraftFromControls();
         var succeeded = apply(draft);
         applyStatus.Text = succeeded ? T("Postavke su spremljene.", "Settings applied.") : string.Empty;

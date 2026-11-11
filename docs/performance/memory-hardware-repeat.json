@@ -1,8 +1,0 @@
-{
-  "Mode": "HardwareDefaultRepeat",
-  "Seconds": 20,
-  "CpuSeconds": 0.046875,
-  "WorkingSetMiB": 162.8203125,
-  "PrivateMiB": 90.140625,
-  "PrivateWorkingSetMiB": 74.7265625
-}

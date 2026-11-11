@@ -1,12 +1,14 @@
 using System.Globalization;
 using System.IO;
 using System.Text.Json;
+using WeatherWidget.Core;
 namespace WeatherWidget;
 public sealed class AppSettings
 {
     public string CityName { get; set; } = "Zagreb";
     public double Latitude { get; set; } = 45.81444;
     public double Longitude { get; set; } = 15.97798;
+    public List<WeatherLocation> SavedLocations { get; set; } = new();
     public string TemperatureUnit { get; set; } = "celsius";
     public string WindUnit { get; set; } = "kmh";
     public string Theme { get; set; } = "modern";
@@ -35,6 +37,7 @@ public sealed class AppSettings
         {
             if (!File.Exists(settingsPath)) return new();
             var settings = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(settingsPath)) ?? new();
+            settings.SavedLocations = global::WeatherWidget.SavedLocations.Normalize(settings.SavedLocations);
             if (settings.Left is { } x && (!double.IsFinite(x) || Math.Abs(x) > 100000)) settings.Left = null;
             if (settings.Top is { } y && (!double.IsFinite(y) || Math.Abs(y) > 100000)) settings.Top = null;
             if (!double.IsFinite(settings.Scale) || settings.Scale < .5 || settings.Scale > 3) settings.Scale = 1;
@@ -85,6 +88,7 @@ public sealed class AppSettings
     internal void CopyUserChoices(AppSettings source)
     {
         CityName=source.CityName;Latitude=source.Latitude;Longitude=source.Longitude;
+        SavedLocations=new(source.SavedLocations);
         TemperatureUnit=source.TemperatureUnit;WindUnit=source.WindUnit;Language=source.Language;
         Theme=source.Theme;Scale=source.Scale;DetailScale=source.DetailScale;
         Locked=source.Locked;AlwaysOnTop=source.AlwaysOnTop;SnapToEdges=source.SnapToEdges;
