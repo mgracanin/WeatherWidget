@@ -1,0 +1,9 @@
+{
+  "Mode": "SoftwareOnlyRelease",
+  "Version": "0.2.1+bfe04998a6686ee2c080e7a26e925d70f009b374",
+  "Seconds": 15,
+  "CpuSeconds": 0.015625,
+  "WorkingSetMiB": 104.984375,
+  "PrivateMiB": 28.671875,
+  "PrivateWorkingSetMiB": 22.3359375
+}

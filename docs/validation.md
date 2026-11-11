@@ -94,3 +94,8 @@ Owner confirmed v0.1.3: layout is consistent, detailed-window header movement wo
 Release build and self-contained publish passed with zero warnings/errors. Core 10/10 and application 15/15 assertion groups passed on the final source, including closing reentrancy, unchanged-view reuse, theme persistence/repainting and malformed provider recovery. Aurora, Paper and Sunset use frozen weather-aware vector backgrounds in both sizes. Offscreen WPF fixture renders were inspected; these do not establish fresh native desktop interaction coverage.
 
 See review-and-performance.md and performance/ for findings, reproducible controlled allocation benchmarks and the short warm runtime observation. Existing owner acceptance of movement, resizing, Win+D and virtual desktops remains the native interaction evidence; Explorer restart and the broader mixed-DPI/monitor/logon matrix remain unverified.
+
+
+## v0.2.1 memory and tray follow-up
+
+Core 10/10 and app 16/16 groups pass; build and self-contained publish have zero warnings/errors. First-opening tray cancellation was reproduced in a failing regression before the fix. Process-level software rendering was compared with fresh hardware-default runs; measured private working set dropped substantially on this machine. See review-and-performance.md for raw metrics, startup CPU cost and native-interaction coverage limits. The packaged application was relaunched intentionally for measurements.

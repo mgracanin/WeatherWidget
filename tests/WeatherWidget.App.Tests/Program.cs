@@ -37,6 +37,29 @@ internal static class Program
         Environment.ExitCode = exitCode;
     }
 
+    private static Task TrayFirstOpen()
+    {
+        var app = PreviewRenderer.FixtureApp;
+        var factory = typeof(App).GetMethod("BuildTrayMenu", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+        using var menu = (System.Windows.Forms.ContextMenuStrip)factory.Invoke(app, null)!;
+        var opening = typeof(System.Windows.Forms.ToolStripDropDown).GetMethod("OnOpening", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+        var previous = app.Settings.Theme;
+        try
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                app.Settings.Theme = i == 0 ? "aurora" : "paper";
+                var args = new System.ComponentModel.CancelEventArgs(true);
+                opening.Invoke(menu, new object[] {args});
+                if (args.Cancel || menu.Items.Count == 0) throw new Exception("First opening was cancelled despite populated items.");
+                var options = menu.Items.OfType<System.Windows.Forms.ToolStripMenuItem>().SelectMany(item => item.DropDownItems.OfType<System.Windows.Forms.ToolStripMenuItem>());
+                var label = i == 0 ? "Aurora" : "Paper";
+                if (!options.Any(item => item.Text == label && item.Checked)) throw new Exception("Tray theme checks are stale.");
+            }
+        }
+        finally { app.Settings.Theme = previous; }
+        return Task.CompletedTask;
+    }
     private static async Task<int> RunAll()
     {
         var tests = new (string Name, Func<Task> Run)[]
@@ -55,7 +78,8 @@ internal static class Program
             ("weather artwork assets load and forecast layout has 12-hour and 5-day views", ForecastLayoutAndAssets),
             ("forecast close is safe when closing triggers deactivation or another close", ForecastCloseRegression),
             ("unchanged presentation reuse and visible state boundaries", () => PerfChecks.PresentationReuse(fixture)),
-            ("five themes persist, reuse frozen artwork and repaint correctly", () => ThemeChecks.Run(fixture))
+            ("five themes persist, reuse frozen artwork and repaint correctly", () => ThemeChecks.Run(fixture)),
+            ("tray menu opens on the first request and refreshes checked options", TrayFirstOpen)
         };
         var failures = 0;
         foreach (var test in tests)

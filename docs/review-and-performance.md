@@ -44,3 +44,23 @@ Reproduce the controlled comparison from the repository root with: .\scripts\Ben
 
 Post-deployment warm observation: 190.88 seconds, 0.1094 CPU seconds (0.0573% of one logical CPU), 164.79MiB working set and 94.24MiB private bytes. No current-run unhandled exception or icon-load failure was recorded. This is an observation, not a long-duration memory-leak guarantee or an aged-vs-fresh reduction claim.
 
+
+## v0.2.1 memory investigation and tray correction
+
+System.Runtime counters on the existing process showed roughly 5 MiB managed heap after the last collection and 14.2 MiB GC-committed memory. Most of the process footprint is outside the managed heap. Images and weather objects are not the dominant measured managed-memory cost.
+
+Kept: process-level WPF SoftwareOnly rendering, set before Application construction. The widget has small, mostly static layered windows; avoiding the hardware rendering pipeline reduced measured private memory on this machine. Microsoft documents this switch at https://learn.microsoft.com/en-us/dotnet/api/system.windows.media.renderoptions.processrendermode . No forced garbage collection, working-set trimming or global registry changes.
+
+Short fresh-process observations with the existing saved settings (MiB):
+
+| Rendering | Private committed | Private working set | Total working set |
+|---|---:|---:|---:|
+| Hardware default repeat | 90.14 | 74.73 | 162.82 |
+| Software candidate settled | 41.36 | 34.93 | 147.83 |
+
+Private working set is the closest counter here to Task Manager's usual process Memory display. Total working set includes shared resident pages and is a different metric. Startup measurements showed higher software CPU (3.72 CPU seconds in an early 20-second window versus 0.73 for hardware); after settling the software sample used 0 CPU seconds over 30 seconds, and the repeated hardware sample used 0.047 over 20 seconds. These short observations do not establish a fixed memory ceiling, long-term leak freedom, or drag/resize CPU behavior. Saved scale/theme and background workload can affect results; raw observations are in performance/memory-*.json. Broader native interaction acceptance remains with the owner.
+
+Fixed: the initially empty WinForms tray ContextMenuStrip enters Opening with cancellation set. After populating current menu items, explicitly set cancellation based on the final item count. The regression test failed before the fix (15/16), then passed, including rebuilt theme checks on consecutive openings. Final checks: core 10/10 and application 16/16 groups, build/publish zero warnings/errors. This tests first-opening event behavior, not a simulated OS tray click.
+
+Final packaged v0.2.1 observation after 30-second warmup: 22.34 MiB private working set, 28.67 MiB private committed, 104.98 MiB total working set; 0.0156 CPU seconds over 15 seconds. The package remains running. These are point-in-time observations, not a guaranteed steady footprint.
+

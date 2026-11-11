@@ -17,7 +17,12 @@ public sealed partial class App : System.Windows.Application
     internal WeatherController Weather { get; private set; } = null!;
     public string Text(string hr, string en) => UiText.T(Settings.Language, hr, en);
     [STAThread]
-    public static void Main() => new App { ShutdownMode = ShutdownMode.OnExplicitShutdown }.Run();
+    public static void Main()
+    {
+        // Tiny, mostly static layered windows do not need a dedicated GPU rendering device.
+        System.Windows.Media.RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.SoftwareOnly;
+        new App { ShutdownMode = ShutdownMode.OnExplicitShutdown }.Run();
+    }
     protected override void OnStartup(StartupEventArgs e)
     {
 #if DEBUG
@@ -53,12 +58,14 @@ public sealed partial class App : System.Windows.Application
     private Forms.ContextMenuStrip BuildTrayMenu()
     {
         var menu = new Forms.ContextMenuStrip();
-        menu.Opening += (_, _) =>
+        menu.Opening += (_, e) =>
         {
             foreach (Forms.ToolStripItem item in menu.Items.Cast<Forms.ToolStripItem>().ToArray()) item.Dispose();
             menu.Items.Clear();
             foreach (var item in BuildWidgetMenu().Items)
                 menu.Items.Add(ConvertMenu(item));
+            // An initially empty strip arrives with cancellation already set by WinForms.
+            e.Cancel = menu.Items.Count == 0;
         };
         return menu;
     }
@@ -126,5 +133,3 @@ public sealed partial class App : System.Windows.Application
         }
     }
 }
-
-
