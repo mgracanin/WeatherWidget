@@ -57,7 +57,7 @@ public sealed class AppSettings
         catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
         { (logger ?? Log)("Settings load failed; using defaults: " + ex.Message); return new(); }
     }
-    public void Save(string? path = null, Action<string>? logger = null)
+    public bool Save(string? path = null, Action<string>? logger = null)
     {
         var settingsPath = path ?? SettingsPath;
         var temporary = settingsPath + ".tmp";
@@ -67,13 +67,29 @@ public sealed class AppSettings
             if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
             File.WriteAllText(temporary, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true }));
             File.Move(temporary, settingsPath, true);
+            return true;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { (logger ?? Log)("Settings save failed: " + ex.Message); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { (logger ?? Log)("Settings save failed: " + ex.Message); return false; }
         finally
         {
             try { if (File.Exists(temporary)) File.Delete(temporary); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { (logger ?? Log)("Settings temporary-file cleanup failed: " + ex.Message); }
         }
+    }
+    internal AppSettings CreateDraft()
+    {
+        var copy=new AppSettings {Left=Left,Top=Top,AlertLocation=AlertLocation,AlertHistory=new(AlertHistory)};
+        copy.CopyUserChoices(this);
+        return copy;
+    }
+    internal void CopyUserChoices(AppSettings source)
+    {
+        CityName=source.CityName;Latitude=source.Latitude;Longitude=source.Longitude;
+        TemperatureUnit=source.TemperatureUnit;WindUnit=source.WindUnit;Language=source.Language;
+        Theme=source.Theme;Scale=source.Scale;DetailScale=source.DetailScale;
+        Locked=source.Locked;AlwaysOnTop=source.AlwaysOnTop;SnapToEdges=source.SnapToEdges;
+        StartWithWindows=source.StartWithWindows;WeatherNotifications=source.WeatherNotifications;
+        QuietHours=source.QuietHours;QuietStart=source.QuietStart;QuietEnd=source.QuietEnd;
     }
     public static void Log(string message)
     {

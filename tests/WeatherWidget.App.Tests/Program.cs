@@ -27,7 +27,7 @@ internal static class Program
         var exitCode = 0;
         dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(async () =>
         {
-            try { exitCode = args.Contains("--benchmark-render", StringComparer.OrdinalIgnoreCase) ? await PreviewRenderer.BenchmarkAsync(fixture,args.Last()) : args.Contains("--render-previews", StringComparer.OrdinalIgnoreCase)
+            try { exitCode = args.Contains("--render-settings") ? await SettingsChecks.Render() : args.Contains("--benchmark-render", StringComparer.OrdinalIgnoreCase) ? await PreviewRenderer.BenchmarkAsync(fixture,args.Last()) : args.Contains("--render-previews", StringComparer.OrdinalIgnoreCase)
                     ? await PreviewRenderer.RenderAsync(fixture)
                     : await RunAll(); }
             catch (Exception exception) { Console.Error.WriteLine($"Harness error: {exception}"); exitCode = 1; }
@@ -43,21 +43,23 @@ internal static class Program
         var factory = typeof(App).GetMethod("BuildTrayMenu", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
         using var menu = (System.Windows.Forms.ContextMenuStrip)factory.Invoke(app, null)!;
         var opening = typeof(System.Windows.Forms.ToolStripDropDown).GetMethod("OnOpening", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
-        var previous = app.Settings.Theme;
+        var previous = app.Settings.Locked;
         try
         {
             for (int i = 0; i < 2; i++)
             {
-                app.Settings.Theme = i == 0 ? "aurora" : "paper";
+                app.Settings.Locked = i == 0;
                 var args = new System.ComponentModel.CancelEventArgs(true);
                 opening.Invoke(menu, new object[] {args});
                 if (args.Cancel || menu.Items.Count == 0) throw new Exception("First opening was cancelled despite populated items.");
-                var options = menu.Items.OfType<System.Windows.Forms.ToolStripMenuItem>().SelectMany(item => item.DropDownItems.OfType<System.Windows.Forms.ToolStripMenuItem>());
-                var label = i == 0 ? "Aurora" : "Paper";
-                if (!options.Any(item => item.Text == label && item.Checked)) throw new Exception("Tray theme checks are stale.");
+                var items=menu.Items.OfType<System.Windows.Forms.ToolStripMenuItem>().ToArray();
+                if(items.Any(item=>item.HasDropDownItems))throw new Exception("Preferences should not be nested in the tray menu.");
+                if(!items.Any(item=>item.Text is "Settings…" or "Postavke…"))throw new Exception("Settings entry missing.");
+                if(items.Length>6)throw new Exception("Tray menu has too many actions.");
+                if(!items.Any(item=>item.Text is "Lock position" or "Zaključaj položaj" && item.Checked==app.Settings.Locked))throw new Exception("Tray lock state is stale.");
             }
         }
-        finally { app.Settings.Theme = previous; }
+        finally { app.Settings.Locked = previous; }
         return Task.CompletedTask;
     }
     private static async Task<int> RunAll()
@@ -83,7 +85,10 @@ internal static class Program
             ("rain-soon resolution, freshness and precipitation types", ExtraChecks.Rain),
             ("notification opt-in, quiet hours, persisted cooldown and city changes", ExtraChecks.Notifications),
             ("edge snapping across negative and oversized monitor bounds", ExtraChecks.Snapping),
-            ("bounded localized tray tooltip with units and offline status", ExtraChecks.TrayTooltip)
+            ("bounded localized tray tooltip with units and offline status", ExtraChecks.TrayTooltip),
+            ("all editor preferences persist without overwriting placement or alerts", SettingsChecks.Persistence),
+            ("save/startup failures leave live settings unchanged and roll back registration", SettingsChecks.SaveFailures),
+            ("settings controls apply draft choices, cancel edits and retain failed saves", SettingsChecks.Editor)
         };
         var failures = 0;
         foreach (var test in tests)

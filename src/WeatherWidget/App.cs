@@ -109,6 +109,7 @@ public sealed partial class App : System.Windows.Application
         recoveryTimer.Stop();
         StopLifecycle();
         CloseForecast();
+        settingsWindow?.Close();
         Weather?.Dispose();
         showWait?.Unregister(null); exitWait?.Unregister(null);
         tray?.Dispose();

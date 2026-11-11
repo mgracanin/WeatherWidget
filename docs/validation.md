@@ -105,3 +105,8 @@ Core 10/10 and app 16/16 groups pass; build and self-contained publish have zero
 Core 10/10 and application 20/20 groups pass after integrating rain-soon information, richer tray text, edge snapping, optional persisted weather reminders with quiet hours, and Nordic/Forest themes. The seven-theme checks cover frozen/reused artwork and persistence. New tests cover rain threshold/type/freshness/time range, opt-in, quiet boundaries, persisted six-hour cooldown, city changes, bounded history and malformed preferences, negative monitor coordinates/oversized cards and tooltip length/units/offline state.
 
 Actual WPF fixture previews for Nordic and Forest were rendered at 130x67 and 330x243 and inspected. The code review found no additional concrete defect. Build/publish passed without warnings/errors. Native mouse snapping, OS notification delivery and user theme acceptance remain owner checks; no test balloons were sent. Existing desktop integration compatibility limits remain unchanged. See lightweight-features.md for behavior and defaults.
+
+
+## v0.4.0 Settings window
+
+Core 10/10 and app 23/23 groups pass. New settings persistence, rollback, draft/apply/cancel and simplified tray-menu coverage is detailed in settings-window.md. English/Croatian WPF component renders were inspected at normal/minimum sizes. No OS startup registration or owner preferences were changed by tests. Native Settings interaction remains owner acceptance.

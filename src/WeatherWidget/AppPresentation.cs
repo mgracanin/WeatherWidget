@@ -99,66 +99,11 @@ public sealed partial class App
         }
         menu.Items.Add(Command(Text("Prikaži / vrati na zaslon","Show / recover on screen"),()=>Recover(true)));
         menu.Items.Add(Command(Text("Osvježi","Refresh"),()=>_ = RefreshWeather()));
-        menu.Items.Add(Command(Text("Promijeni grad…","Change city…"),ChooseCity));
-        MenuItem Options(string label, IEnumerable<(string Label,bool Selected,Action Set)> options)
-        {
-            var parent=new MenuItem { Header=label };
-            foreach (var option in options) parent.Items.Add(Command(option.Label,option.Set,option.Selected));
-            menu.Items.Add(parent); return parent;
-        }
-        Options(Text("Izgled","Theme"),ThemeCatalog.All.Select(theme => (Text(theme.LabelHr,theme.LabelEn),Settings.Theme==theme.Id,(Action)(()=>{Settings.Theme=theme.Id;PreferenceChanged();}))));
-        Options(Text("Veličina","Scale"), new[] {.75,1,1.25,1.5,2}.Select(scale => (
-            (scale*100).ToString("0")+"%", Settings.Scale==scale, (Action)(()=>{ Settings.Scale=scale; PreferenceChanged(); }))));
-        menu.Items.Add(Command(Text("Privuci rubovima zaslona","Snap to screen edges"),()=>{Settings.SnapToEdges=!Settings.SnapToEdges;PreferenceChanged();},Settings.SnapToEdges));
-        menu.Items.Add(Command(Text("Vremenske obavijesti","Weather notifications"),()=>{Settings.WeatherNotifications=!Settings.WeatherNotifications;lastNotificationSnapshot=null;PreferenceChanged();},Settings.WeatherNotifications));
-        Options(Text("Tiho razdoblje (lokalno vrijeme računala)","Quiet hours (computer local time)"),new[] {
-            (Text("Isključeno","Off"),!Settings.QuietHours,(Action)(()=>{Settings.QuietHours=false;PreferenceChanged();})),
-            ("22:00–07:00",Settings.QuietHours&&Settings.QuietStart==22&&Settings.QuietEnd==7,(Action)(()=>{Settings.QuietHours=true;Settings.QuietStart=22;Settings.QuietEnd=7;PreferenceChanged();})),
-            ("23:00–08:00",Settings.QuietHours&&Settings.QuietStart==23&&Settings.QuietEnd==8,(Action)(()=>{Settings.QuietHours=true;Settings.QuietStart=23;Settings.QuietEnd=8;PreferenceChanged();}))
-        });
-        menu.Items.Add(Command(Text("Zaključaj položaj","Lock position"),()=>{ Settings.Locked=!Settings.Locked; PreferenceChanged(); },Settings.Locked));
-        menu.Items.Add(Command(Text("Uvijek na vrhu","Always on top"),()=>{ Settings.AlwaysOnTop=!Settings.AlwaysOnTop; PreferenceChanged(true); },Settings.AlwaysOnTop));
-        Options(Text("Temperatura","Temperature"),new[] {("°C","celsius"),("°F","fahrenheit")}.Select(pair=>(
-            pair.Item1,Settings.TemperatureUnit==pair.Item2,(Action)(()=>{Settings.TemperatureUnit=pair.Item2;PreferenceChanged();}))));
-        Options(Text("Vjetar","Wind"),new[] {("km/h","kmh"),("m/s","ms"),("mph","mph")}.Select(pair=>(
-            pair.Item1,Settings.WindUnit==pair.Item2,(Action)(()=>{Settings.WindUnit=pair.Item2;PreferenceChanged();}))));
-        Options(Text("Jezik","Language"),new[] {("Hrvatski","hr"),("English","en"),(Text("Prema sustavu Windows","Windows default"),"system")}.Select(pair=>(
-            pair.Item1,Settings.Language==pair.Item2,(Action)(()=>{Settings.Language=pair.Item2;PreferenceChanged();}))));
-        menu.Items.Add(Command(Text("Pokreni sa sustavom Windows","Start with Windows"),ToggleStartup,Settings.StartWithWindows));
+        menu.Items.Add(Command(Text("Prikaži prognozu","Show forecast"),()=>{ if(forecast==null) ToggleForecast(); else forecast.Activate(); }));
+        menu.Items.Add(Command(Text("Zaključaj položaj","Lock position"),()=>{Settings.Locked=!Settings.Locked;PreferenceChanged();},Settings.Locked));
         menu.Items.Add(new Separator());
-        menu.Items.Add(Command("Status",ShowStatus));
+        menu.Items.Add(Command(Text("Postavke…","Settings…"),ShowSettings));
         menu.Items.Add(Command(Text("Izlaz","Exit"),ExitWidget));
         return menu;
-    }
-    private async void ChooseCity()
-    {
-        CloseForecast();
-        var picker=new CityPicker(Weather.Client,Settings.Language,Settings.CityName);
-        if (picker.ShowDialog()!=true || picker.SelectedLocation is not { } city) return;
-        Settings.CityName=city.Name; Settings.Latitude=city.Latitude; Settings.Longitude=city.Longitude;
-        Settings.Save();
-        await RefreshWeather(true);
-    }
-    private void ToggleStartup()
-    {
-        try
-        {
-            using var key=Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
-            if (Settings.StartWithWindows) key.DeleteValue("WeatherWidget",false);
-            else
-            {
-                var executable=Environment.ProcessPath ?? throw new IOException("Executable path unavailable.");
-                var command="\""+executable+"\"";
-                if (Path.GetFileNameWithoutExtension(executable).Equals("dotnet",StringComparison.OrdinalIgnoreCase))
-                    command+=" \""+Path.Combine(AppContext.BaseDirectory,"WeatherWidget.dll")+"\"";
-                key.SetValue("WeatherWidget",command);
-            }
-            Settings.StartWithWindows=!Settings.StartWithWindows; PreferenceChanged();
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
-        {
-            AppSettings.Log("Startup change failed: "+ex.Message);
-            System.Windows.MessageBox.Show(Text("Promjena automatskog pokretanja nije uspjela: ","Could not change startup: ")+ex.Message,"WeatherWidget");
-        }
     }
 }

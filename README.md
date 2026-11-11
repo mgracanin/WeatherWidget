@@ -6,7 +6,7 @@ Standalone Windows 11 weather widget. Native C# / WPF on .NET 10, with no XWidge
 
 Open `artifacts/win-x64/WeatherWidget.exe` after building a portable release. Keep its `Assets` folder beside the executable. The self-contained x64 package includes its runtime; no SDK, XWidget, browser or API key is needed on the target PC.
 
-The widget runs in the notification area (system tray), without a taskbar button. Its sun/cloud icon is available as editable vector artwork under Assets/Brand. The compact card defaults to the original 130 x 67 size. Drag it to move it; use its lower-right grip or Ctrl+wheel to resize proportionally. Click without dragging to expand forecasts. The detail view defaults to 330 x 243, uses the matching larger background, and can be moved by its header and resized from its lower-right grip. Both sizes are saved. Escape, the close button or clicking outside collapses the expanded view. Right-click the card or tray icon for settings. Double-click the tray icon or launch the app again to recover the existing widget. Exit through the menu. Startup with Windows is off by default and can be enabled/disabled in the menu.
+The widget runs in the notification area (system tray), without a taskbar button. Its sun/cloud icon is available as editable vector artwork under Assets/Brand. The compact card defaults to the original 130 x 67 size. Drag it to move it; use its lower-right grip or Ctrl+wheel to resize proportionally. Click without dragging to expand forecasts. The detail view defaults to 330 x 243, uses the matching larger background, and can be moved by its header and resized from its lower-right grip. Both sizes are saved. Escape, the close button or clicking outside collapses the expanded view. Right-click the card or tray icon for settings. Double-click the tray icon or launch the app again to recover the existing widget. Exit through the menu. Startup with Windows is off by default and can be changed in Settings → Desktop.
 
 ## Features
 
@@ -46,8 +46,16 @@ See docs/review-and-performance.md for fixed review findings, measured before/af
 
 Seven selectable themes now include **Nordic** and **Forest**, alongside Modern, Classic, Aurora, Paper and Sunset. All use weather-aware backgrounds.
 
-The compact card can show **Rain soon**; hover it for the hourly estimate. Hover the tray icon for temperature, feels-like and rain/offline status. **Snap to screen edges** is on by default and can be disabled from the right-click menu.
+The compact card can show **Rain soon**; hover it for the hourly estimate. Hover the tray icon for temperature, feels-like and rain/offline status. **Snap to screen edges** is on by default and can be disabled in Settings → Desktop.
 
-Enable **Weather notifications** in that menu for rain-soon, frost-risk and strong-wind reminders. Notifications default off. **Quiet hours** use your computer's local time (22:00–07:00 by default); alternatives are 23:00–08:00 or Off. Repeated reminders are limited to once per type per six hours for the active location, including across restarts. Windows notification settings may suppress them. These are weather reminders, not official emergency alerts.
+Enable **Weather notifications** in Settings → Notifications for rain-soon, frost-risk and strong-wind reminders. Notifications default off. **Quiet hours** use your computer's local time (22:00–07:00 by default); start/end hours are editable, or quiet hours can be turned off. Repeated reminders are limited to once per type per six hours for the active location, including across restarts. Windows notification settings may suppress them. These are weather reminders, not official emergency alerts.
 
 These features reuse existing weather downloads and refresh timers. See [feature behavior and checks](docs/lightweight-features.md).
+
+### Settings window (v0.4.0)
+
+Right-click the card or tray icon and choose **Settings…**. Preferences are grouped into Location & units, Appearance (including theme preview), Desktop and Notifications. The context menu keeps only quick actions.
+
+**Apply** saves to disk and updates the widget. **Save and close** does the same and closes Settings. **Cancel**, Escape or × discards changes since the last Apply. Saved preferences load automatically on the next launch from `%LOCALAPPDATA%/WeatherWidget/settings.json`. Moving the card or sending reminders while Settings is open does not get overwritten by applying an older draft. A save/startup-registration failure is shown rather than reported as success. Reopen Settings after changing language to translate its controls.
+
+Settings is created only when opened, reused if already open, and released on close; it adds no background timer or network request. City search runs only when you open the city picker.
