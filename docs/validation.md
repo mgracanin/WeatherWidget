@@ -44,3 +44,6 @@ A new editable vector sun/cloud app icon and multi-size ICO are included for the
 
 Version 0.1.1: corrected desktop-owned popup launched as the packaged executable and retained saved preferences. Native diagnostics show a top-level WS_POPUP/WS_EX_LAYERED/WS_EX_TOOLWINDOW, owned by the desktop shell, with an on-screen 220x113 rectangle. These remain native-state observations pending owner visibility confirmation. The nine icon frames decoded successfully and integrated WPF checks passed 11/11 after icon wiring. Executable SHA-256: 5CB2E8E64998E5799BE8BE555F89830F99F4765F842FCE4828AB52E12537E963.
 
+
+Owner confirmation after v0.1.1: the card is visible and clicking it opens the forecast. This verifies the main visibility regression is resolved in the owner's Windows session. Win+D, drag/lock and virtual-desktop behavior remain awaiting direct confirmation.
+
