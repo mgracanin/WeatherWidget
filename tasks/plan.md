@@ -16,11 +16,11 @@ Tasks: tasks/todo.md. Development/model policy: AGENTS.md.
 
 ### Compact card
 
-Show city, temperature, weather illustration and a short condition label. Keep provider attribution and last weather timestamp accessible in the detail view/tooltip. Classic preserves the original card proportions; Modern uses a clean rounded card and readable typography with the supplied artwork. Both show identical data and controls. Include adjustable scale without stretching or clipping artwork. Default city Zagreb and Celsius. Modern is the default at 220 x 110 device-independent pixels; Classic preserves the original proportions. Support Croatian and English, following Windows initially with a manual override.
+Show city, temperature, weather illustration and a short condition label. Keep provider attribution and last weather timestamp accessible in the detail view/tooltip. Classic preserves the original card proportions; Modern overlays readable typography on the supplied weather scene as the full card background; no inset scene thumbnail. Both show identical data and controls. Include adjustable scale without stretching or clipping artwork. Default city Zagreb and Celsius. Modern is the default at 220 pixels wide, with height derived from the original 130:67 background aspect ratio (about 113 device-independent pixels); Classic preserves the original proportions. Support Croatian and English, following Windows initially with a manual override.
 
 ### Expanded view
 
-Click the card (without dragging) to toggle a panel anchored beside it. Show feels-like temperature, humidity, wind, today's high/low, the next 12 hourly forecast entries (temperature and rain probability), and five daily forecast entries (condition, high/low, rain probability). Display the selected city's local time, not the PC's time zone. Position the panel within the current monitor's work area; Escape and an explicit close control collapse it.
+Click the card (without dragging) to toggle a panel anchored beside it. Use the larger 264 x 194 weather background for the entire expanded panel (528 x 388 at default size). Overlay feels-like temperature, humidity, wind and today's high/low. Tabs switch between the next 12 hourly forecast entries (temperature and rain probability) and five daily entries (condition, high/low, rain probability). Display the selected city's local time, not the PC's time zone. Position the panel within the current monitor's work area; Escape and an explicit close control collapse it.
 
 ### Desktop behavior
 
@@ -65,3 +65,5 @@ Modern default, 220 x 110; Classic available. Scale control. Win+D retains compa
 - https://open-meteo.com/en/docs
 - https://open-meteo.com/en/docs/geocoding-api
 - https://learn.microsoft.com/en-us/dotnet/desktop/wpf/whats-new/net100
+
+Owner correction during implementation: full-scene backgrounds in compact and expanded views; preserve their proportions. Production application must be tray-only with no taskbar entry. Development inspection mode is excluded from Release.
