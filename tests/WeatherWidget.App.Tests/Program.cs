@@ -380,6 +380,12 @@ internal static class Program
             largeAssets.Add(large.UriSource.LocalPath);
         }
         True(smallAssets.Count > 1 && largeAssets.Count > 1, $"Expected mapped backgrounds, found {smallAssets.Count} small and {largeAssets.Count} large assets.");
+        var used=new HashSet<string>(smallAssets.Concat(largeAssets),StringComparer.OrdinalIgnoreCase);
+        var published=Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory,"Assets","WeatherGadget"),"*.png")
+            .Concat(Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory,"Assets","WinPrognoza","slike"),"*.png")).ToArray();
+        True(used.SetEquals(published),"Weather asset payload contains unused or missing images.");
+        var hashes=published.Select(path=>Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path))));
+        Equal(published.Length,hashes.Distinct(StringComparer.Ordinal).Count());
         var compactBackground = WeatherArt.Background(3, false, expanded: false);
         var largeBackground = WeatherArt.Background(3, false, expanded: true);
         Equal("docked_black_cloudy.png", Path.GetFileName(compactBackground.UriSource!.LocalPath));

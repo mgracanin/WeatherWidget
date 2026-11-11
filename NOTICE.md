@@ -6,7 +6,17 @@ Open-Meteo API documentation: https://open-meteo.com/en/docs
 Geocoding documentation: https://open-meteo.com/en/docs/geocoding-api
 The public free endpoint is for noncommercial use; a commercial distribution must review provider terms.
 
-The original Weather.Gadget and WinPrognoza artwork came from my existing installation and retains its original ownership. No new license or redistribution rights are claimed for those assets. This repository and its packages are for private use.
+## Legacy weather artwork
+
+The retained PNG backgrounds under `Assets/WeatherGadget` originate from the Microsoft Windows 7 Weather gadget. The supplied original `en-US/gadget.xml` identifies **Microsoft Corporation** as author and includes **© 2009**. Credit: Microsoft Corporation, Windows 7 Weather gadget artwork.
+
+`Assets/WinPrognoza/slike/sun.png` and `partlycloudy.png` were supplied through the existing WinPrognoza installation. Their original artwork rights remain with the respective rights holders; no separate redistribution licence was supplied with these copies.
+
+These credits document provenance, not permission. No redistribution licence for the legacy artwork has been established, and this notice does not assert Microsoft permission or endorsement. The repository is private, but that does not itself grant copying or redistribution rights. Public distribution should use appropriately licensed replacement artwork or proceed only after the relevant permission is confirmed.
+
+Microsoft's policy: https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/permissions
+
+The Aurora, Paper, Sunset, Nordic and Forest scenes are drawn by this project's vector renderer; the legacy PNG files are separate from those scenes. See [asset inventory](docs/assets.md).
 
 .NET runtime components in a self-contained release remain under Microsoft's applicable .NET distribution notices and licenses.
 

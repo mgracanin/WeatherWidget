@@ -13,6 +13,18 @@ if ($Test) {
     }
 }
 if ($Publish) {
+    $publishedExe=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot 'artifacts\win-x64\WeatherWidget.exe'))
+    if (Get-Process -Name WeatherWidget -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $publishedExe }) {
+        throw 'Close the packaged WeatherWidget before publishing over it.'
+    }
+    # Publish does not remove obsolete content files from an existing output directory.
+    $assetOutput=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot 'artifacts\win-x64\Assets'))
+    $workspacePrefix=[IO.Path]::GetFullPath($PSScriptRoot).TrimEnd('\')+'\'
+    if (!$assetOutput.StartsWith($workspacePrefix,[StringComparison]::OrdinalIgnoreCase)) { throw 'Asset output is outside the workspace.' }
+    if (Test-Path -LiteralPath $assetOutput) {
+        if ((Get-Item -LiteralPath $assetOutput).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Refusing to clean a linked asset directory.' }
+        Remove-Item -LiteralPath $assetOutput -Recurse -Force
+    }
     & $dotnet publish src\WeatherWidget -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -o artifacts\win-x64 --nologo
     if ($LASTEXITCODE -ne 0) { throw 'Publish failed.' }
     Copy-Item README.md,NOTICE.md -Destination artifacts\win-x64
