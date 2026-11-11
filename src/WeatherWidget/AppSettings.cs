@@ -35,7 +35,7 @@ public sealed class AppSettings
             settings.Language = settings.Language is "hr" or "en" or "system" ? settings.Language : "system";
             settings.TemperatureUnit = settings.TemperatureUnit is "fahrenheit" or "F" ? "fahrenheit" : "celsius";
             settings.WindUnit = settings.WindUnit switch { "ms" or "m/s" => "ms", "mph" => "mph", _ => "kmh" };
-            settings.Theme = settings.Theme == "classic" ? "classic" : "modern";
+            settings.Theme = ThemeCatalog.Get(settings.Theme).Id;
             settings.CityName = string.IsNullOrWhiteSpace(settings.CityName) ? "Zagreb" : settings.CityName.Trim()[..Math.Min(120, settings.CityName.Trim().Length)];
             if (!double.IsFinite(settings.Latitude) || settings.Latitude is < -90 or > 90 ||
                 !double.IsFinite(settings.Longitude) || settings.Longitude is < -180 or > 180)

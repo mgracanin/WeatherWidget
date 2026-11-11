@@ -39,7 +39,7 @@ public sealed partial class App
     private void PresentationChanged()
     {
         if (exiting) return;
-        widget?.UpdateWeatherPresentation();
+        if(widget?.IsNativeWindowAlive==true) widget.UpdateWeatherPresentation();
         if (forecast != null && Weather.Snapshot is { } data)
             forecast.Update(data, Settings.Language, Settings.TemperatureUnit == "fahrenheit" ? "F":"C",
                 Settings.WindUnit switch { "ms"=>"m/s", "mph"=>"mph", _=>"km/h" }, Weather.Offline, Weather.Error);
@@ -78,13 +78,14 @@ public sealed partial class App
     }
     private void PreferenceChanged(bool host=false)
     {
-        Settings.Save(); PresentationChanged();
-        if (widget != null)
+        PresentationChanged();
+        if (widget?.IsNativeWindowAlive==true)
         {
             widget.ContextMenu=BuildWidgetMenu();
             if (host) widget.ApplyDesktopMode();
             widget.RecoverOnScreen();
         }
+        else {Settings.Save();Recover(false);}
     }
     public ContextMenu BuildWidgetMenu()
     {
@@ -104,9 +105,7 @@ public sealed partial class App
             foreach (var option in options) parent.Items.Add(Command(option.Label,option.Set,option.Selected));
             menu.Items.Add(parent); return parent;
         }
-        Options(Text("Izgled","Theme"), new[] {
-            ("Modern", Settings.Theme=="modern", (Action)(()=>{ Settings.Theme="modern"; PreferenceChanged(); })),
-            ("Classic", Settings.Theme=="classic", (Action)(()=>{ Settings.Theme="classic"; PreferenceChanged(); })) });
+        Options(Text("Izgled","Theme"),ThemeCatalog.All.Select(theme => (Text(theme.LabelHr,theme.LabelEn),Settings.Theme==theme.Id,(Action)(()=>{Settings.Theme=theme.Id;PreferenceChanged();}))));
         Options(Text("Veličina","Scale"), new[] {.75,1,1.25,1.5,2}.Select(scale => (
             (scale*100).ToString("0")+"%", Settings.Scale==scale, (Action)(()=>{ Settings.Scale=scale; PreferenceChanged(); }))));
         menu.Items.Add(Command(Text("Zaključaj položaj","Lock position"),()=>{ Settings.Locked=!Settings.Locked; PreferenceChanged(); },Settings.Locked));

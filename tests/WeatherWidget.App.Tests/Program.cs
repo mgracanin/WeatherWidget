@@ -20,13 +20,14 @@ internal static class Program
     [STAThread]
     private static void Main(string[] args)
     {
+        _ = PreviewRenderer.FixtureApp;
         fixture = File.ReadAllText(FixturePath);
         var dispatcher = Dispatcher.CurrentDispatcher;
         SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(dispatcher));
         var exitCode = 0;
         dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(async () =>
         {
-            try { exitCode = args.Contains("--render-previews", StringComparer.OrdinalIgnoreCase)
+            try { exitCode = args.Contains("--benchmark-render", StringComparer.OrdinalIgnoreCase) ? await PreviewRenderer.BenchmarkAsync(fixture,args.Last()) : args.Contains("--render-previews", StringComparer.OrdinalIgnoreCase)
                     ? await PreviewRenderer.RenderAsync(fixture)
                     : await RunAll(); }
             catch (Exception exception) { Console.Error.WriteLine($"Harness error: {exception}"); exitCode = 1; }
@@ -52,7 +53,9 @@ internal static class Program
             ("invalid settings normalize and valid option values are preserved", SettingsNormalizeValues),
             ("tray icon is embedded with all Windows sizes", EmbeddedIconFrames),
             ("weather artwork assets load and forecast layout has 12-hour and 5-day views", ForecastLayoutAndAssets),
-            ("forecast close is safe when closing triggers deactivation or another close", ForecastCloseRegression)
+            ("forecast close is safe when closing triggers deactivation or another close", ForecastCloseRegression),
+            ("unchanged presentation reuse and visible state boundaries", () => PerfChecks.PresentationReuse(fixture)),
+            ("five themes persist, reuse frozen artwork and repaint correctly", () => ThemeChecks.Run(fixture))
         };
         var failures = 0;
         foreach (var test in tests)

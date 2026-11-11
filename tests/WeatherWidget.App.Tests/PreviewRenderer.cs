@@ -14,6 +14,53 @@ using WeatherWidget.Core;
 
 internal static class PreviewRenderer
 {
+    private static App? fixtureApp;
+    internal static App FixtureApp => fixtureApp ??= new App {ShutdownMode=ShutdownMode.OnExplicitShutdown};
+    public static async Task<int> BenchmarkAsync(string providerFixture, string outputPath)
+    {
+        var seed=await LoadFixtureAsync(providerFixture);
+        var sample=MakeSnapshot(seed,new PreviewCase("benchmark","modern","Zagreb",12.4,3,true));
+        var app=FixtureApp;
+        var settings=new AppSettings {CityName="Zagreb",Latitude=sample.Location.Latitude,Longitude=sample.Location.Longitude,Theme="modern",Language="en"};
+        using var workspace=new PreviewWorkspace();
+        var cache=await workspace.WriteCacheAsync(sample);
+        using var http=new HttpClient(new NoNetworkHandler());
+        using var client=new WeatherClient(http);
+        using var controller=new WeatherController(settings,Dispatcher.CurrentDispatcher,client,cache,_=>{});
+        SetAppState(app,settings,controller);
+        var widget=new WidgetWindow(app);
+        var forecast=new ForecastWindow();
+        var snapshotProperty=typeof(WeatherController).GetProperty("Snapshot")!;
+        var measurements=new List<object>();
+        void Layout(Window window)
+        {
+            var content=(FrameworkElement)window.Content;
+            content.Measure(new Size(window.Width,window.Height));content.Arrange(new Rect(0,0,window.Width,window.Height));content.UpdateLayout();
+        }
+        void Measure(string name,int iterations,Action<int> action)
+        {
+            for(int i=0;i<10;i++) action(i);
+            GC.Collect();GC.WaitForPendingFinalizers();GC.Collect();
+            long allocated=GC.GetAllocatedBytesForCurrentThread();
+            var clock=System.Diagnostics.Stopwatch.StartNew();
+            for(int i=0;i<iterations;i++) action(i);
+            clock.Stop();allocated=GC.GetAllocatedBytesForCurrentThread()-allocated;
+            measurements.Add(new {Name=name,Iterations=iterations,ElapsedMs=clock.Elapsed.TotalMilliseconds,AllocatedBytes=allocated});
+        }
+        try
+        {
+            widget.UpdateWeatherPresentation();Layout(widget);
+            forecast.Update(sample,"en","C","km/h",true,null);Layout(forecast);
+            Measure("compact-unchanged",500,_=>{widget.UpdateWeatherPresentation();Layout(widget);});
+            Measure("compact-changed",200,i=>{snapshotProperty.SetValue(controller,sample with {Current=sample.Current with {TemperatureC=12+i/10d}});widget.UpdateWeatherPresentation();Layout(widget);});
+            Measure("forecast-unchanged",500,_=>{forecast.Update(sample,"en","C","km/h",true,null);Layout(forecast);});
+            Measure("forecast-changed",200,i=>{forecast.Update(sample with {Current=sample.Current with {TemperatureC=12+i/10d}},"en","C","km/h",true,null);Layout(forecast);});
+        }
+        finally {widget.Close();forecast.RequestClose();}
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputPath))!);
+        var json=JsonSerializer.Serialize(new {Runtime=Environment.Version.ToString(),Platform=Environment.OSVersion.ToString(),Measurements=measurements},new JsonSerializerOptions {WriteIndented=true});
+        File.WriteAllText(outputPath,json);Console.WriteLine(json);return 0;
+    }
     private sealed record PreviewCase(string Name, string Theme, string City, double TemperatureC, int Code, bool IsDay);
 
     public static async Task<int> RenderAsync(string providerFixture)
@@ -23,12 +70,15 @@ internal static class PreviewRenderer
         Directory.CreateDirectory(outputDirectory);
 
         var seed = await LoadFixtureAsync(providerFixture);
-        var app = new App { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        var app = FixtureApp;
         var cases = new[]
         {
             new PreviewCase("modern-rain", "modern", "Zagreb", 12.4, 61, true),
             new PreviewCase("classic-sun", "classic", "Split", 25.6, 0, true),
             new PreviewCase("modern-night", "modern", "Rijeka", 5.1, 2, false),
+            new PreviewCase("aurora-rain", "aurora", "Zagreb", 12.4, 61, true),
+            new PreviewCase("paper-sun", "paper", "Split", 25.6, 0, true),
+            new PreviewCase("sunset-night", "sunset", "Rijeka", 5.1, 2, false),
             new PreviewCase("modern-long-city-negative", "modern", "Gornji Grad – Medveščak i okolica (iznimno dugo ime)", -12.8, 71, false)
         };
 
@@ -41,6 +91,8 @@ internal static class PreviewRenderer
         await RenderForecastAsync(MakeSnapshot(seed, cases[0]), "hourly-rain", showDaily: false, outputDirectory);
         await RenderForecastAsync(MakeSnapshot(seed, cases[1]), "daily-sun", showDaily: true, outputDirectory);
 
+        foreach(var item in cases.Where(item=>item.Theme is "aurora" or "paper" or "sunset"))
+            await RenderForecastAsync(MakeSnapshot(seed,item),item.Name,showDaily:true,outputDirectory,item.Theme);
         Console.WriteLine($"Rendered fixture previews to {outputDirectory}");
         return 0;
     }
@@ -50,7 +102,7 @@ internal static class PreviewRenderer
         var seed = await LoadFixtureAsync(providerFixture);
         var fixtureCase = new PreviewCase("cloudy", "modern", "Zagreb", 12.4, 3, false);
         var snapshot = MakeSnapshot(seed, fixtureCase);
-        var app = new App { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        var app = FixtureApp;
 
         foreach (var theme in new[] { "modern", "classic" })
         {
@@ -164,9 +216,9 @@ internal static class PreviewRenderer
         }
     }
 
-    private static async Task RenderForecastAsync(WeatherSnapshot snapshot, string name, bool showDaily, string outputDirectory)
+    private static async Task RenderForecastAsync(WeatherSnapshot snapshot, string name, bool showDaily, string outputDirectory,string theme="modern")
     {
-        var window = new ForecastWindow();
+        var window = new ForecastWindow(new AppSettings {Theme=theme,Language="en"});
         try
         {
             window.Update(snapshot, "en", "F", "mph", isOffline: true, lastError: "Fixture preview; no network request.");

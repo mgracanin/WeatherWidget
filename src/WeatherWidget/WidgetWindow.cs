@@ -9,6 +9,7 @@ namespace WeatherWidget;
 public sealed partial class WidgetWindow : Window
 {
     private readonly App app;
+    private static readonly uint TaskbarCreatedMessage=Native.RegisterWindowMessage("TaskbarCreated");
     private nint handle, desktopHost;
     private uint hostProcess;
     private readonly System.Windows.Threading.DispatcherTimer recoveryLift = new() { Interval=TimeSpan.FromSeconds(5) };
@@ -61,7 +62,7 @@ public sealed partial class WidgetWindow : Window
     public ContextMenu CreateContextMenu() => app.BuildWidgetMenu();
     private nint WindowMessage(nint hwnd, int message, nint wp, nint lp, ref bool handled)
     {
-        if (message == Native.RegisterWindowMessage("TaskbarCreated") || message == 0x007E)
+        if (message == TaskbarCreatedMessage || message == 0x007E)
             Dispatcher.BeginInvoke(() => { CheckDesktopHost(); RecoverOnScreen(); });
         return 0;
     }
@@ -215,7 +216,7 @@ public sealed partial class WidgetWindow : Window
     {
         if (dragOrigin is null) return;
         dragOrigin=null; ReleaseMouseCapture();
-        if (moved) { RecoverOnScreen(); SavePosition(); }
+        if (moved) { RecoverOnScreen(); }
         else CardClicked?.Invoke(this, EventArgs.Empty);
         e.Handled=true;
     }

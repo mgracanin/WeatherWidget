@@ -10,7 +10,7 @@ The widget runs in the notification area (system tray), without a taskbar button
 
 ## Features
 
-- Modern and Classic compact themes. Weather scenes form the complete background, preserving the original card proportions.
+- Five selectable themes: Modern, Classic, Aurora, Paper and Sunset. The three new themes use cached, scalable vector artwork. Weather scenes form the complete background, preserving the original card proportions.
 - Larger weather-scene background in the expanded view, with hourly and five-day forecast tabs, consistent flat controls, arrow navigation and horizontal mouse-wheel scrolling.
 - Current temperature, condition, feels-like, humidity, wind, daily high/low and precipitation probabilities.
 - City search with country/region choices; selected city's local timestamps.
@@ -37,3 +37,7 @@ Use .NET 10 SDK, or the local SDK in `tools/dotnet` (excluded from Git):
 For a development apphost, set `DOTNET_ROOT` to the local `tools/dotnet` folder and launch `bin/Debug/net10.0-windows/WeatherWidget.exe`. Launching a DLL through `dotnet.exe` bypasses the application manifest's DPI settings and can prevent desktop attachment. Debug builds have an explicit `--inspect` window for UI testing; Release ignores it and remains tray-only. `--exit` gracefully stops the running instance.
 
 The full feature plan and checklist are in `tasks/`; balanced model routing is in `AGENTS.md`. Build output, local settings and the SDK are excluded from Git. This is a private development repository; see `NOTICE.md` for resource ownership and provider attribution.
+
+## Efficiency and code review
+
+See docs/review-and-performance.md for fixed review findings, measured before/after managed-allocation and layout results, and limits of resident-memory comparisons. Run scripts/BenchmarkRender.ps1 to reproduce the controlled fixture benchmark. Normal minute ticks retain unchanged visual trees; no production forced-GC or working-set trimming is used.

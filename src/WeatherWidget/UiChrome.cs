@@ -12,12 +12,12 @@ internal static class UiChrome
           <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}" CornerRadius="2">
             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
           </Border>
-          <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Opacity" Value="0.8"/></Trigger><Trigger Property="IsKeyboardFocused" Value="True"><Setter Property="BorderBrush" Value="White"/></Trigger></ControlTemplate.Triggers>
+          <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Opacity" Value="0.8"/></Trigger><Trigger Property="IsKeyboardFocused" Value="True"><Setter Property="BorderBrush" Value="{Binding Foreground, RelativeSource={RelativeSource Self}}"/></Trigger></ControlTemplate.Triggers>
         </ControlTemplate>
         """);
     private static readonly ControlTemplate GripTemplate = (ControlTemplate)XamlReader.Parse("""
         <ControlTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" TargetType="Thumb">
-          <Grid Background="Transparent"><Path Data="M2,10 L10,2 M6,10 L10,6" Stroke="White" StrokeThickness="1" Opacity="0.7"/></Grid>
+          <Grid Background="Transparent"><Path Data="M2,10 L10,2 M6,10 L10,6" Stroke="{TemplateBinding Foreground}" StrokeThickness="1" Opacity="0.7"/></Grid>
         </ControlTemplate>
         """);
     public static Button FlatButton(string text, string tooltip, RoutedEventHandler handler)
@@ -27,9 +27,9 @@ internal static class UiChrome
             BorderThickness=new Thickness(1), Padding=new Thickness(4,1,4,1), FontSize=9 };
         System.Windows.Automation.AutomationProperties.SetName(button,tooltip); button.Click+=handler; return button;
     }
-    public static Thumb ResizeGrip(string tooltip)
+    public static Thumb ResizeGrip(string tooltip,Brush? foreground=null)
     {
-        var thumb = new Thumb { Width=12, Height=12, Cursor=Cursors.SizeNWSE, ToolTip=tooltip, Template=GripTemplate };
+        var thumb = new Thumb { Width=12, Height=12, Cursor=Cursors.SizeNWSE, ToolTip=tooltip, Foreground=foreground??Brushes.White, Template=GripTemplate };
         System.Windows.Automation.AutomationProperties.SetName(thumb,tooltip); return thumb;
     }
     public static bool IsInteractiveSource(DependencyObject? node)

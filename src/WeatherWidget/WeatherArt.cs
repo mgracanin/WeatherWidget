@@ -1,10 +1,20 @@
 using System.Windows.Media.Imaging;
+using System.Windows.Media;
 using WeatherWidget.Core;
 namespace WeatherWidget;
 internal static class WeatherArt
 {
     private static readonly Dictionary<string, BitmapImage> Images = new();
-    public static BitmapImage Background(int code, bool day, bool expanded)
+    private static readonly Dictionary<(string Theme,int Family,bool Day,bool Expanded),DrawingImage> VectorImages=new();
+    public static ImageSource Background(int code,bool day,bool expanded,string themeId)
+    {
+        var theme=ThemeCatalog.Get(themeId);
+        if(theme.Id is "modern" or "classic") return Background(code,day,expanded);
+        int family=NewThemeArtwork.FamilyFor(code);
+        var key=(theme.Id,family,day,expanded);
+        if(!VectorImages.TryGetValue(key,out var image)) {image=NewThemeArtwork.Create(theme.Id,family,day,expanded);VectorImages.Add(key,image);}
+        return image;
+    }    public static BitmapImage Background(int code, bool day, bool expanded)
     {
         string path;
         var sky = code switch

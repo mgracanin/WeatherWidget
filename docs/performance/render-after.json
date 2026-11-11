@@ -1,0 +1,30 @@
+{
+  "Runtime": "10.0.15",
+  "Platform": "Microsoft Windows NT 10.0.26300.0",
+  "Measurements": [
+    {
+      "Name": "compact-unchanged",
+      "Iterations": 500,
+      "ElapsedMs": 0.1691,
+      "AllocatedBytes": 24000
+    },
+    {
+      "Name": "compact-changed",
+      "Iterations": 200,
+      "ElapsedMs": 371.7711,
+      "AllocatedBytes": 11401888
+    },
+    {
+      "Name": "forecast-unchanged",
+      "Iterations": 500,
+      "ElapsedMs": 0.3793,
+      "AllocatedBytes": 124000
+    },
+    {
+      "Name": "forecast-changed",
+      "Iterations": 200,
+      "ElapsedMs": 2197.6465,
+      "AllocatedBytes": 148784168
+    }
+  ]
+}

@@ -3,7 +3,6 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 using WeatherWidget.Core;
 namespace WeatherWidget;
@@ -14,6 +13,8 @@ internal sealed class ForecastWindow : Window
     private readonly Canvas scene=new() { Width=SceneWidth,Height=SceneHeight,Background=Brushes.Transparent };
     private readonly Canvas content=new() { Width=SceneWidth,Height=SceneHeight };
     private readonly AppSettings? preferences;
+    private ThemeDefinition theme=ThemeCatalog.Get("modern");
+    private readonly Thumb resizeGrip;
     private WeatherSnapshot? snapshot;
     private string language="en",unit="C",windUnit="km/h";
     private bool offline,showDays,closing,dismissScheduled,moving,resizing,pendingRender;
@@ -22,10 +23,15 @@ internal sealed class ForecastWindow : Window
     private Native.Point resizeOrigin;
     private ScrollViewer? hoursViewport;
     private double hourOffset;
+    private WeatherSnapshot? renderedSnapshot;
+    private ForecastState? renderedState;
+    private readonly record struct ForecastState(string Theme,string Language, string Unit, string WindUnit, bool Offline,
+        string? Error, bool ShowDays, bool Expired, bool Stale, int AgeMinute, DateOnly Today, DateTimeOffset? FirstHour);
 
     public ForecastWindow(AppSettings? preferences=null)
     {
         this.preferences=preferences;
+        theme=ThemeCatalog.Get(preferences?.Theme);
         language=preferences?.Language ?? "system";
         var scale=Math.Clamp(preferences?.DetailScale ?? 1,.8,2);
         Title="WeatherWidget — Forecast";Width=SceneWidth*scale;Height=SceneHeight*scale;
@@ -33,7 +39,8 @@ internal sealed class ForecastWindow : Window
         WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;
         ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;FontFamily=new FontFamily("Segoe UI");
         scene.Children.Add(content);
-        var thumb=UiChrome.ResizeGrip(T("Povucite za promjenu veličine","Drag to resize"));
+        var thumb=UiChrome.ResizeGrip(T("Povucite za promjenu veličine","Drag to resize"),theme.ForegroundBrush);
+        resizeGrip=thumb;
         Canvas.SetLeft(thumb,291);Canvas.SetTop(thumb,201);scene.Children.Add(thumb);
         System.Windows.Automation.AutomationProperties.SetName(thumb,"Resize forecast");
         thumb.DragStarted += (_,_) =>
@@ -106,28 +113,35 @@ internal sealed class ForecastWindow : Window
             if(!closing && !moving && !resizing && IsVisible && !IsActive) RequestClose();
         }));
     }
-    public void Update(WeatherSnapshot data,string lang,string temperatureUnit,string speedUnit,bool isOffline,string? lastError)
+    public void Update(WeatherSnapshot data,string lang,string temperatureUnit,string speedUnit,bool isOffline,string? lastError,DateTimeOffset? nowUtc=null)
     {
         if(closing) return;
         snapshot=data;language=lang;unit=temperatureUnit;windUnit=speedUnit;offline=isOffline;error=lastError;
-        if(moving || resizing) {pendingRender=true;return;} Render();
+        if(moving || resizing) {pendingRender=true;return;} Render(nowUtc);
     }
-    private void Render()
+    private void Render(DateTimeOffset? nowUtc=null)
     {
-        if(snapshot is not {} data) return;
-        content.Children.Clear();
-        Put(new Image {Source=WeatherArt.Background(data.Current.WeatherCode,data.Current.IsDay,true),
-            Width=SceneWidth,Height=SceneHeight,Stretch=Stretch.Uniform},0,0);
+        if(closing || snapshot is not {} data) return;
+        var now=nowUtc ?? DateTimeOffset.UtcNow;
         var zone=TimeZoneInfo.FindSystemTimeZoneById(data.TimeZoneId);
-        var age=DateTimeOffset.UtcNow-(data.Current.TimeUtc<data.FetchedAtUtc?data.Current.TimeUtc:data.FetchedAtUtc);
+        var age=now-(data.Current.TimeUtc<data.FetchedAtUtc?data.Current.TimeUtc:data.FetchedAtUtc);
         bool expired=age>=TimeSpan.FromHours(6);
+        var today=DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(now,zone).DateTime);
+        var firstHour=showDays ? null : data.Hourly.FirstOrDefault(h=>h.TimeUtc>=now.AddHours(-1))?.TimeUtc;
+        var nextTheme=ThemeCatalog.Get(preferences?.Theme);
+        var state=new ForecastState(nextTheme.Id,UiText.Resolve(language),unit,windUnit,offline,error,showDays,expired,
+            age>=TimeSpan.FromHours(1),offline || age>=TimeSpan.FromHours(1) ? Math.Max(0,(int)age.TotalMinutes):0,today,firstHour);
+        if(ReferenceEquals(renderedSnapshot,data) && renderedState==state) return;
+        theme=nextTheme;resizeGrip.Foreground=theme.ForegroundBrush;
+        content.Children.Clear();
+        Put(new Image {Source=WeatherArt.Background(data.Current.WeatherCode,data.Current.IsDay,true,theme.Id),
+            Width=SceneWidth,Height=SceneHeight,Stretch=Stretch.Uniform},0,0);
         Title=data.Location.Name+" — "+T("Prognoza","Forecast");
         Put(Label(data.Location.Name,14,230,true),25,22);
         var close=FlatButton("×",T("Zatvori prognozu (Esc)","Close forecast (Esc)"),(_,_)=>RequestClose());
         close.Width=20;close.Height=20;close.FontSize=17;Put(close,281,20);
         Put(Label(expired?T("Podaci su prestari","Weather too old"):ConditionCatalog.Description(
             data.Current.WeatherCode,data.Current.IsDay,UiText.Resolve(language)),10,155),25,47);
-        var today=DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow,zone).DateTime);
         var currentDay=data.Daily.FirstOrDefault(d=>d.Date==today);
         Put(Label(currentDay==null?"":"↑ "+Temp(currentDay.HighC)+"   ↓ "+Temp(currentDay.LowC),9,173),25,63);
         var temperature=Label(expired?"—":Temp(data.Current.TemperatureC),30,108);
@@ -158,7 +172,7 @@ internal sealed class ForecastWindow : Window
         }
         else
         {
-            foreach(var hour in data.Hourly.Where(h=>h.TimeUtc>=DateTimeOffset.UtcNow.AddHours(-1)).Take(12))
+            foreach(var hour in data.Hourly.Where(h=>h.TimeUtc>=now.AddHours(-1)).Take(12))
             {
                 var stack=new StackPanel {Width=44};
                 var heading=Label(TimeZoneInfo.ConvertTime(hour.TimeUtc,zone).ToString("HH:mm"),8.5,43);
@@ -184,6 +198,7 @@ internal sealed class ForecastWindow : Window
         source.Height=10;source.Width=121;source.FontSize=7.5;Put(source,23,203);
         var fetchedLabel=Label(T("Dohvat ","Fetched ")+fetched+" · "+data.TimeZoneId,7.5,136);fetchedLabel.TextAlignment=TextAlignment.Right;Put(fetchedLabel,148,203);
         ToolTip=(error==null?"":error+"\n")+T("Postotci: vjerojatnost oborina. Lokalno vrijeme odabranog grada. Povucite zaglavlje za pomicanje.","Percentages: precipitation probability. Times are local to the selected city. Drag the header to move.");
+        renderedSnapshot=data;renderedState=state;
     }
     private void OpenProvider()
     {
@@ -195,20 +210,20 @@ internal sealed class ForecastWindow : Window
     {
         var stack=new StackPanel();stack.Children.Add(Label(title,9,89));stack.Children.Add(Label(value,12,89,true));return stack;
     }
-    private static Button FlatButton(string text,string name,RoutedEventHandler action,bool selected=false)
+    private Button FlatButton(string text,string name,RoutedEventHandler action,bool selected=false)
     {
         var button=UiChrome.FlatButton(text,name,action);
-        button.FontFamily=new FontFamily("Segoe UI");button.FontSize=9;
-        button.Background=selected?new SolidColorBrush(Color.FromArgb(25,255,255,255)):Brushes.Transparent;
-        button.BorderBrush=new SolidColorBrush(Color.FromArgb(selected?(byte)185:(byte)0,255,255,255));
+        button.FontFamily=new FontFamily("Segoe UI");button.FontSize=9;button.Foreground=theme.ForegroundBrush;
+        button.Background=selected?theme.SelectionBrush:Brushes.Transparent;
+        button.BorderBrush=selected?theme.AccentBrush:Brushes.Transparent;
         button.BorderThickness=new Thickness(0,0,0,selected?1:0);
         button.Padding=new Thickness(0);button.Height=20;button.Cursor=Cursors.Hand;
         return button;
     }    private static string Symbol(int code,bool day)=>code switch {0=>day?"☀":"☾",1 or 2 or 3=>"☁",45 or 48=>"≋",>=71 and <=77 or 85 or 86=>"❄",95 or 96 or 99=>"ϟ",>=51 and <=67 or >=80 and <=82=>"☂",_=>"—"};
     private void Put(FrameworkElement item,double x,double y){Canvas.SetLeft(item,x);Canvas.SetTop(item,y);content.Children.Add(item);}
-    private static TextBlock Label(string value,double size,double width,bool bold=false)=>new(){Text=value,Width=width,FontSize=size,
-        Foreground=Brushes.White,FontWeight=bold?FontWeights.SemiBold:FontWeights.Normal,TextTrimming=TextTrimming.CharacterEllipsis,
-        Effect=new DropShadowEffect {Color=Colors.Black,BlurRadius=2,ShadowDepth=1,Opacity=.8}};
+    private TextBlock Label(string value,double size,double width,bool bold=false)=>new(){Text=value,Width=width,FontSize=size,
+        Foreground=theme.ForegroundBrush,FontWeight=bold?FontWeights.SemiBold:FontWeights.Normal,TextTrimming=TextTrimming.CharacterEllipsis,
+        Effect=theme.TextShadow?FrozenStyles.ForecastShadow:null};
     private string T(string hr,string en)=>UiText.T(language,hr,en);
     private string Temp(double c)=>Math.Round(unit=="F"?c*9/5+32:c).ToString(UiText.Culture(language))+"°"+unit;
     private string Wind(double kmh)=>(windUnit=="m/s"?kmh/3.6:windUnit=="mph"?kmh/1.609344:kmh).ToString("0",UiText.Culture(language))+" "+windUnit;
