@@ -7,3 +7,8 @@
 *.suo
 .env
 .env.*
+
+**/bin/
+**/obj/
+**/.vs/
+/artifacts/

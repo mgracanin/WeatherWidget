@@ -1,6 +1,6 @@
 # WeatherWidget implementation tasks
 
-All tasks are pending. The owner is reviewing the feature plan; no implementation is started.
+Owner approved the plan and defaults. Task 1 is in progress.
 Use AGENTS.md for model routing. Scope estimates count production files; keep each slice small.
 
 ## 1. Desktop shell prototype

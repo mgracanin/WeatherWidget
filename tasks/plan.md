@@ -1,6 +1,6 @@
 # WeatherWidget plan
 
-Status: draft for owner review, 2026-11-11. No application implementation yet.
+Status: owner approved, 2026-11-11. Implementation active.
 Project: D:\Development\WeatherWidget; private GitHub repository mgracanin/WeatherWidget.
 Tasks: tasks/todo.md. Development/model policy: AGENTS.md.
 
@@ -16,7 +16,7 @@ Tasks: tasks/todo.md. Development/model policy: AGENTS.md.
 
 ### Compact card
 
-Show city, temperature, weather illustration and a short condition label. Keep provider attribution and last weather timestamp accessible in the detail view/tooltip. Classic preserves the original card proportions; Modern uses a clean rounded card and readable typography with the supplied artwork. Both show identical data and controls. Include adjustable scale without stretching or clipping artwork. Default city Zagreb; Croatian interface and Celsius initially.
+Show city, temperature, weather illustration and a short condition label. Keep provider attribution and last weather timestamp accessible in the detail view/tooltip. Classic preserves the original card proportions; Modern uses a clean rounded card and readable typography with the supplied artwork. Both show identical data and controls. Include adjustable scale without stretching or clipping artwork. Default city Zagreb and Celsius. Modern is the default at 220 x 110 device-independent pixels; Classic preserves the original proportions. Support Croatian and English, following Windows initially with a manual override.
 
 ### Expanded view
 
@@ -26,7 +26,7 @@ Click the card (without dragging) to toggle a panel anchored beside it. Show fee
 
 Borderless, draggable card; remember its position and chosen monitor. Optional lock-position setting and always-on-top toggle. Default intent is to sit behind ordinary application windows, with no regular taskbar button and a tray icon to show the widget, open settings or exit. Tray recovery must work even when the card is hidden. Single running instance. Preserve settings across restart; recover a visible position if a monitor is removed. Keep text and hit targets usable at Windows display scaling levels.
 
-Validate exact desktop integration early: Win+D, Explorer restart, virtual desktops, mixed-DPI monitors and dragging must be tested in Windows. Whether the widget must remain visible during Win+D and follow all virtual desktops is not yet explicitly decided. Do not silently substitute an ordinary floating window and call it equivalent to XWidget. Avoid relying on undocumented shell parenting without a specific compatibility review.
+Validate exact desktop integration early: Win+D, Explorer restart, virtual desktops, mixed-DPI monitors and dragging must be tested in Windows. Owner approved: the compact widget remains visible with Win+D, the expanded panel collapses on Show Desktop, and the compact widget appears on every virtual desktop at the same position. Do not silently substitute an ordinary floating window and call it equivalent to XWidget. Avoid relying on undocumented shell parenting without a specific compatibility review.
 
 ### Settings and commands
 
@@ -54,13 +54,11 @@ Each step has acceptance criteria in todo.md. Prototype desktop behavior before 
 
 ## Later candidates (not version 1 commitments)
 
-Multiple saved cities or multiple widgets; animated artwork; sunrise/sunset and UV; air quality; precipitation radar; severe-weather alerts using a suitable source; English localization; automatic updates. Weather alerts and notifications need a separate product/source decision.
+Multiple saved cities or multiple widgets; animated artwork; sunrise/sunset and UV; air quality; precipitation radar; severe-weather alerts using a suitable source; automatic updates. Weather alerts and notifications need a separate product/source decision.
 
-## Open decisions
+## Approved defaults
 
-- Exact Win+D and virtual-desktop behavior after the shell prototype.
-- Default theme, compact size and scale after visual previews.
-- Confirm Croatian-only initially and the proposed offline freshness thresholds.
+Modern default, 220 x 110; Classic available. Scale control. Win+D retains compact card and collapses detail panel. All virtual desktops. Croatian and English, Windows default with override. Offline cache immediately labelled, stale after one hour, current temperature hidden after six hours. Drag anywhere on the card; distinguish click from drag; optional position lock.
 
 ## References
 
