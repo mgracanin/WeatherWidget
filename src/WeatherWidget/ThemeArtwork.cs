@@ -54,6 +54,29 @@ internal static class NewThemeArtwork
             dc.DrawGeometry(Brush(p.Land2, .67), null, near);
             dc.Pop();
         }
+        else if (theme == "nordic")
+        {
+            // Broad, low-contrast ice facets keep the pale scene calm behind navy text.
+            dc.PushTransform(new ScaleTransform(w / 175, h / 64));
+            dc.DrawGeometry(Brush(p.Land, .28), null, Path("M0,64 L0,50 L37,30 L65,47 L101,18 L137,44 L157,31 L175,41 L175,64 Z"));
+            dc.DrawGeometry(Brush(p.Land2, .45), null, Path("M0,64 L0,59 L45,45 L82,55 L124,39 L153,51 L175,46 L175,64 Z"));
+            dc.DrawGeometry(Brush(p.Glow, .15), null, Path("M37,30 L50,37 L43,35 L33,39 Z M101,18 L116,34 L105,29 L96,32 Z M157,31 L166,39 L157,36 L150,40 Z"));
+            dc.Pop();
+            if (expanded)
+                dc.DrawEllipse(Brush(p.Glow, .12), null, new Point(w * .82, h * .2), w * .26, h * .34);
+        }
+        else if (theme == "forest")
+        {
+            // Layered evergreen silhouettes form a native vector woodland horizon.
+            dc.PushTransform(new ScaleTransform(w / 175, h / 64));
+            dc.DrawGeometry(Brush(p.Land, .72), null, Path("M0,64 L0,48 L14,35 L22,45 L35,24 L49,47 L61,33 L75,50 L90,28 L106,49 L120,34 L135,50 L150,27 L166,48 L175,42 L175,64 Z"));
+            dc.DrawGeometry(Brush(p.Land2, .86), null, Path("M0,64 L0,56 L20,47 L38,53 L56,43 L76,54 L95,45 L115,54 L135,42 L154,53 L175,46 L175,64 Z"));
+            dc.DrawGeometry(Brush(p.Glow, .2), null, Path("M22,45 L35,24 L49,47 L40,39 L35,31 L29,41 Z M90,47 L90,28 L106,49 L98,42 L90,34 L85,43 Z M150,45 L150,27 L166,48 L157,41 L150,33 L145,42 Z"));
+            dc.Pop();
+            if (expanded)
+                dc.DrawRectangle(Gradient(Color.FromArgb(0, 255, 255, 255), Color.FromArgb(12, 0, 0, 0),
+                    new Point(0, 0), new Point(0, 1)), null, new Rect(0, 0, w, h));
+        }
         else if (expanded)
         {
             dc.DrawRoundedRectangle(Brush(Color.FromArgb(20, 29, 51, 50)), null,
@@ -234,6 +257,12 @@ internal static class NewThemeArtwork
     {
         public static Palette For(string theme, bool day) => theme switch
         {
+            "nordic" => day
+                ? new(Color.FromRgb(221, 239, 248), Color.FromRgb(194, 222, 237), Color.FromRgb(133, 196, 223), Color.FromRgb(184, 222, 238), Color.FromRgb(45, 128, 174), Color.FromRgb(248, 253, 255), Color.FromRgb(103, 139, 160), Color.FromRgb(69, 153, 190), Color.FromRgb(227, 244, 250), Color.FromRgb(247, 252, 255), Color.FromRgb(73, 112, 136), Color.FromRgb(145, 190, 210), Color.FromRgb(119, 170, 196), Color.FromArgb(60, 48, 91, 116))
+                : new(Color.FromRgb(190, 217, 233), Color.FromRgb(158, 192, 213), Color.FromRgb(116, 174, 204), Color.FromRgb(151, 191, 213), Color.FromRgb(46, 113, 155), Color.FromRgb(237, 247, 252), Color.FromRgb(93, 131, 153), Color.FromRgb(64, 139, 176), Color.FromRgb(218, 239, 248), Color.FromRgb(246, 251, 255), Color.FromRgb(58, 99, 126), Color.FromRgb(130, 174, 197), Color.FromRgb(104, 155, 182), Color.FromArgb(64, 48, 91, 116)),
+            "forest" => day
+                ? new(Color.FromRgb(30, 69, 56), Color.FromRgb(18, 49, 42), Color.FromRgb(153, 199, 116), Color.FromRgb(91, 154, 111), Color.FromRgb(193, 221, 137), Color.FromRgb(233, 241, 216), Color.FromRgb(129, 163, 132), Color.FromRgb(129, 197, 207), Color.FromRgb(231, 244, 237), Color.FromRgb(238, 239, 198), Color.FromRgb(240, 247, 224), Color.FromRgb(37, 91, 62), Color.FromRgb(24, 69, 54), Color.FromArgb(64, 207, 236, 202))
+                : new(Color.FromRgb(22, 52, 50), Color.FromRgb(10, 31, 35), Color.FromRgb(91, 151, 111), Color.FromRgb(64, 112, 94), Color.FromRgb(157, 199, 125), Color.FromRgb(208, 225, 215), Color.FromRgb(116, 153, 141), Color.FromRgb(111, 177, 193), Color.FromRgb(218, 237, 232), Color.FromRgb(225, 233, 199), Color.FromRgb(221, 240, 223), Color.FromRgb(25, 75, 58), Color.FromRgb(15, 53, 47), Color.FromArgb(64, 207, 236, 202)),
             "paper" => day
                 ? new(Color.FromRgb(246, 241, 229), Color.FromRgb(234, 226, 210), Color.FromRgb(255, 207, 121), Color.FromRgb(251, 224, 172), Color.FromRgb(187, 91, 49), Color.FromRgb(255, 253, 247), Color.FromRgb(92, 103, 96), Color.FromRgb(61, 133, 166), Color.FromRgb(82, 137, 171), Color.FromRgb(253, 233, 188), Color.FromRgb(83, 91, 86), Color.FromRgb(189, 205, 183), Color.FromRgb(153, 179, 161), Color.FromArgb(58, 53, 64, 58))
                 : new(Color.FromRgb(234, 239, 237), Color.FromRgb(218, 227, 225), Color.FromRgb(225, 160, 96), Color.FromRgb(233, 190, 134), Color.FromRgb(239, 171, 109), Color.FromRgb(222, 226, 216), Color.FromRgb(117, 133, 127), Color.FromRgb(134, 193, 210), Color.FromRgb(218, 232, 225), Color.FromRgb(242, 218, 162), Color.FromRgb(228, 222, 203), Color.FromRgb(86, 111, 103), Color.FromRgb(66, 91, 86), Color.FromArgb(70, 255, 255, 255)),
@@ -246,4 +275,3 @@ internal static class NewThemeArtwork
         };
     }
 }
-

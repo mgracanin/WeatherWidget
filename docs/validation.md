@@ -99,3 +99,9 @@ See review-and-performance.md and performance/ for findings, reproducible contro
 ## v0.2.1 memory and tray follow-up
 
 Core 10/10 and app 16/16 groups pass; build and self-contained publish have zero warnings/errors. First-opening tray cancellation was reproduced in a failing regression before the fix. Process-level software rendering was compared with fresh hardware-default runs; measured private working set dropped substantially on this machine. See review-and-performance.md for raw metrics, startup CPU cost and native-interaction coverage limits. The packaged application was relaunched intentionally for measurements.
+
+## v0.3.0 lightweight bundle
+
+Core 10/10 and application 20/20 groups pass after integrating rain-soon information, richer tray text, edge snapping, optional persisted weather reminders with quiet hours, and Nordic/Forest themes. The seven-theme checks cover frozen/reused artwork and persistence. New tests cover rain threshold/type/freshness/time range, opt-in, quiet boundaries, persisted six-hour cooldown, city changes, bounded history and malformed preferences, negative monitor coordinates/oversized cards and tooltip length/units/offline state.
+
+Actual WPF fixture previews for Nordic and Forest were rendered at 130x67 and 330x243 and inspected. The code review found no additional concrete defect. Build/publish passed without warnings/errors. Native mouse snapping, OS notification delivery and user theme acceptance remain owner checks; no test balloons were sent. Existing desktop integration compatibility limits remain unchanged. See lightweight-features.md for behavior and defaults.

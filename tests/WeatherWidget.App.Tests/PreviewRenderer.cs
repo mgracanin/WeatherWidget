@@ -79,6 +79,8 @@ internal static class PreviewRenderer
             new PreviewCase("aurora-rain", "aurora", "Zagreb", 12.4, 61, true),
             new PreviewCase("paper-sun", "paper", "Split", 25.6, 0, true),
             new PreviewCase("sunset-night", "sunset", "Rijeka", 5.1, 2, false),
+            new PreviewCase("nordic-snow", "nordic", "Oslo", -2.4, 71, true),
+            new PreviewCase("forest-night", "forest", "Zagreb", 7.1, 61, false),
             new PreviewCase("modern-long-city-negative", "modern", "Gornji Grad – Medveščak i okolica (iznimno dugo ime)", -12.8, 71, false)
         };
 
@@ -91,7 +93,7 @@ internal static class PreviewRenderer
         await RenderForecastAsync(MakeSnapshot(seed, cases[0]), "hourly-rain", showDaily: false, outputDirectory);
         await RenderForecastAsync(MakeSnapshot(seed, cases[1]), "daily-sun", showDaily: true, outputDirectory);
 
-        foreach(var item in cases.Where(item=>item.Theme is "aurora" or "paper" or "sunset"))
+        foreach(var item in cases.Where(item=>item.Theme is "aurora" or "paper" or "sunset" or "nordic" or "forest"))
             await RenderForecastAsync(MakeSnapshot(seed,item),item.Name,showDaily:true,outputDirectory,item.Theme);
         Console.WriteLine($"Rendered fixture previews to {outputDirectory}");
         return 0;

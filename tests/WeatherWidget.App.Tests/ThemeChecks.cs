@@ -10,7 +10,7 @@ internal static class ThemeChecks
 {
     public static async Task Run(string fixture)
     {
-        if(ThemeCatalog.All.Count!=5) throw new Exception("Expected five selectable themes.");
+        if(ThemeCatalog.All.Count!=7) throw new Exception("Expected seven selectable themes.");
         var directory=Path.Combine(Path.GetTempPath(),"WeatherWidgetThemes-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
         var path=Path.Combine(directory,"settings.json");
         try

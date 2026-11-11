@@ -216,10 +216,18 @@ public sealed partial class WidgetWindow : Window
     {
         if (dragOrigin is null) return;
         dragOrigin=null; ReleaseMouseCapture();
-        if (moved) { RecoverOnScreen(); }
+        if (moved)
+        {
+            if (app.Settings.SnapToEdges && !app.Settings.Locked && Native.GetWindowRect(handle,out var bounds))
+            {
+                var area=Forms.Screen.FromRectangle(new System.Drawing.Rectangle(bounds.Left,bounds.Top,bounds.Width,bounds.Height)).WorkingArea;
+                int distance=(int)Math.Round(12*System.Windows.Media.VisualTreeHelper.GetDpi(this).DpiScaleX);
+                var snapped=EdgeSnap.Position(bounds.Left,bounds.Top,bounds.Width,bounds.Height,area.Left,area.Top,area.Right,area.Bottom,distance);
+                MoveScreen(snapped.X,snapped.Y);
+            }
+            RecoverOnScreen();
+        }
         else CardClicked?.Invoke(this, EventArgs.Empty);
         e.Handled=true;
     }
 }
-
-

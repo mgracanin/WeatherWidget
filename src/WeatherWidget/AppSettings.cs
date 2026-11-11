@@ -16,6 +16,13 @@ public sealed class AppSettings
     public bool Locked { get; set; }
     public bool AlwaysOnTop { get; set; }
     public bool StartWithWindows { get; set; }
+    public bool SnapToEdges { get; set; } = true;
+    public bool WeatherNotifications { get; set; }
+    public bool QuietHours { get; set; } = true;
+    public int QuietStart { get; set; } = 22;
+    public int QuietEnd { get; set; } = 7;
+    public string AlertLocation { get; set; } = "";
+    public Dictionary<string,DateTimeOffset> AlertHistory { get; set; } = new();
     // Physical screen pixels; negative origins are valid.
     public double? Left { get; set; }
     public double? Top { get; set; }
@@ -32,6 +39,11 @@ public sealed class AppSettings
             if (settings.Top is { } y && (!double.IsFinite(y) || Math.Abs(y) > 100000)) settings.Top = null;
             if (!double.IsFinite(settings.Scale) || settings.Scale < .5 || settings.Scale > 3) settings.Scale = 1;
             if (!double.IsFinite(settings.DetailScale) || settings.DetailScale < .8 || settings.DetailScale > 2) settings.DetailScale = 1;
+            if (settings.QuietStart is < 0 or > 23) settings.QuietStart = 22;
+            if (settings.QuietEnd is < 0 or > 23) settings.QuietEnd = 7;
+            settings.AlertLocation ??= "";
+            settings.AlertHistory = (settings.AlertHistory ?? new()).Where(pair => pair.Key is "rain" or "frost" or "wind")
+                .Where(pair => pair.Value <= DateTimeOffset.UtcNow.AddMinutes(5)).ToDictionary(pair => pair.Key,pair => pair.Value);
             settings.Language = settings.Language is "hr" or "en" or "system" ? settings.Language : "system";
             settings.TemperatureUnit = settings.TemperatureUnit is "fahrenheit" or "F" ? "fahrenheit" : "celsius";
             settings.WindUnit = settings.WindUnit switch { "ms" or "m/s" => "ms", "mph" => "mph", _ => "kmh" };
@@ -75,4 +87,3 @@ public sealed class AppSettings
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
     }
 }
-

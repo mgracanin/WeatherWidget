@@ -39,6 +39,7 @@ public sealed partial class App
     private void PresentationChanged()
     {
         if (exiting) return;
+        UpdateExtras();
         if(widget?.IsNativeWindowAlive==true) widget.UpdateWeatherPresentation();
         if (forecast != null && Weather.Snapshot is { } data)
             forecast.Update(data, Settings.Language, Settings.TemperatureUnit == "fahrenheit" ? "F":"C",
@@ -108,6 +109,13 @@ public sealed partial class App
         Options(Text("Izgled","Theme"),ThemeCatalog.All.Select(theme => (Text(theme.LabelHr,theme.LabelEn),Settings.Theme==theme.Id,(Action)(()=>{Settings.Theme=theme.Id;PreferenceChanged();}))));
         Options(Text("Veličina","Scale"), new[] {.75,1,1.25,1.5,2}.Select(scale => (
             (scale*100).ToString("0")+"%", Settings.Scale==scale, (Action)(()=>{ Settings.Scale=scale; PreferenceChanged(); }))));
+        menu.Items.Add(Command(Text("Privuci rubovima zaslona","Snap to screen edges"),()=>{Settings.SnapToEdges=!Settings.SnapToEdges;PreferenceChanged();},Settings.SnapToEdges));
+        menu.Items.Add(Command(Text("Vremenske obavijesti","Weather notifications"),()=>{Settings.WeatherNotifications=!Settings.WeatherNotifications;lastNotificationSnapshot=null;PreferenceChanged();},Settings.WeatherNotifications));
+        Options(Text("Tiho razdoblje (lokalno vrijeme računala)","Quiet hours (computer local time)"),new[] {
+            (Text("Isključeno","Off"),!Settings.QuietHours,(Action)(()=>{Settings.QuietHours=false;PreferenceChanged();})),
+            ("22:00–07:00",Settings.QuietHours&&Settings.QuietStart==22&&Settings.QuietEnd==7,(Action)(()=>{Settings.QuietHours=true;Settings.QuietStart=22;Settings.QuietEnd=7;PreferenceChanged();})),
+            ("23:00–08:00",Settings.QuietHours&&Settings.QuietStart==23&&Settings.QuietEnd==8,(Action)(()=>{Settings.QuietHours=true;Settings.QuietStart=23;Settings.QuietEnd=8;PreferenceChanged();}))
+        });
         menu.Items.Add(Command(Text("Zaključaj položaj","Lock position"),()=>{ Settings.Locked=!Settings.Locked; PreferenceChanged(); },Settings.Locked));
         menu.Items.Add(Command(Text("Uvijek na vrhu","Always on top"),()=>{ Settings.AlwaysOnTop=!Settings.AlwaysOnTop; PreferenceChanged(true); },Settings.AlwaysOnTop));
         Options(Text("Temperatura","Temperature"),new[] {("°C","celsius"),("°F","fahrenheit")}.Select(pair=>(
@@ -154,4 +162,3 @@ public sealed partial class App
         }
     }
 }
-

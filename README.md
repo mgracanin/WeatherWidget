@@ -10,7 +10,7 @@ The widget runs in the notification area (system tray), without a taskbar button
 
 ## Features
 
-- Five selectable themes: Modern, Classic, Aurora, Paper and Sunset. The three new themes use cached, scalable vector artwork. Weather scenes form the complete background, preserving the original card proportions.
+- Seven selectable themes: Modern, Classic, Aurora, Paper, Sunset, Nordic and Forest. The five newer themes use cached, scalable vector artwork. Weather scenes form the complete background, preserving the original card proportions.
 - Larger weather-scene background in the expanded view, with hourly and five-day forecast tabs, consistent flat controls, arrow navigation and horizontal mouse-wheel scrolling.
 - Current temperature, condition, feels-like, humidity, wind, daily high/low and precipitation probabilities.
 - City search with country/region choices; selected city's local timestamps.
@@ -41,3 +41,13 @@ The full feature plan and checklist are in `tasks/`; balanced model routing is i
 ## Efficiency and code review
 
 See docs/review-and-performance.md for fixed review findings, measured before/after managed-allocation and layout results, and limits of resident-memory comparisons. Run scripts/BenchmarkRender.ps1 to reproduce the controlled fixture benchmark. Normal minute ticks retain unchanged visual trees; no production forced-GC or working-set trimming is used.
+
+### Lightweight extras (v0.3.0)
+
+Seven selectable themes now include **Nordic** and **Forest**, alongside Modern, Classic, Aurora, Paper and Sunset. All use weather-aware backgrounds.
+
+The compact card can show **Rain soon**; hover it for the hourly estimate. Hover the tray icon for temperature, feels-like and rain/offline status. **Snap to screen edges** is on by default and can be disabled from the right-click menu.
+
+Enable **Weather notifications** in that menu for rain-soon, frost-risk and strong-wind reminders. Notifications default off. **Quiet hours** use your computer's local time (22:00–07:00 by default); alternatives are 23:00–08:00 or Off. Repeated reminders are limited to once per type per six hours for the active location, including across restarts. Windows notification settings may suppress them. These are weather reminders, not official emergency alerts.
+
+These features reuse existing weather downloads and refresh timers. See [feature behavior and checks](docs/lightweight-features.md).

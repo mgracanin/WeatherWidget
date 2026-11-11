@@ -78,8 +78,12 @@ internal static class Program
             ("weather artwork assets load and forecast layout has 12-hour and 5-day views", ForecastLayoutAndAssets),
             ("forecast close is safe when closing triggers deactivation or another close", ForecastCloseRegression),
             ("unchanged presentation reuse and visible state boundaries", () => PerfChecks.PresentationReuse(fixture)),
-            ("five themes persist, reuse frozen artwork and repaint correctly", () => ThemeChecks.Run(fixture)),
-            ("tray menu opens on the first request and refreshes checked options", TrayFirstOpen)
+            ("seven themes persist, reuse frozen artwork and repaint correctly", () => ThemeChecks.Run(fixture)),
+            ("tray menu opens on the first request and refreshes checked options", TrayFirstOpen),
+            ("rain-soon resolution, freshness and precipitation types", ExtraChecks.Rain),
+            ("notification opt-in, quiet hours, persisted cooldown and city changes", ExtraChecks.Notifications),
+            ("edge snapping across negative and oversized monitor bounds", ExtraChecks.Snapping),
+            ("bounded localized tray tooltip with units and offline status", ExtraChecks.TrayTooltip)
         };
         var failures = 0;
         foreach (var test in tests)

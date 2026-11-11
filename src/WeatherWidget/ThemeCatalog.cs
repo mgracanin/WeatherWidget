@@ -23,7 +23,9 @@ internal static class ThemeCatalog
         new("classic", "Klasična", "Classic", Colors.White, Color.FromRgb(232, 239, 247), Color.FromRgb(255, 211, 94), true),
         new("aurora", "Polarna svjetlost", "Aurora", Color.FromRgb(245, 253, 252), Color.FromRgb(193, 222, 220), Color.FromRgb(101, 231, 204), false),
         new("paper", "Papir", "Paper", Color.FromRgb(35, 47, 48), Color.FromRgb(81, 96, 93), Color.FromRgb(194, 111, 57), false),
-        new("sunset", "Zalazak sunca", "Sunset", Color.FromRgb(255, 248, 235), Color.FromRgb(226, 212, 196), Color.FromRgb(255, 183, 103), false)
+        new("sunset", "Zalazak sunca", "Sunset", Color.FromRgb(255, 248, 235), Color.FromRgb(226, 212, 196), Color.FromRgb(255, 183, 103), false),
+        new("nordic", "Nordijska", "Nordic", Color.FromRgb(25, 48, 72), Color.FromRgb(61, 83, 105), Color.FromRgb(44, 137, 190), false),
+        new("forest", "Šuma", "Forest", Color.FromRgb(246, 250, 235), Color.FromRgb(208, 222, 198), Color.FromRgb(172, 213, 129), false)
     ];
 
     public static IReadOnlyList<ThemeDefinition> All => themes;
@@ -35,4 +37,3 @@ internal static class ThemeCatalog
     public static bool IsKnown(string? id) =>
         themes.Any(theme => string.Equals(theme.Id, id, StringComparison.OrdinalIgnoreCase));
 }
-
