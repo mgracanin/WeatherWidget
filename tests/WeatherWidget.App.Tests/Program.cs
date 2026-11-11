@@ -48,7 +48,9 @@ internal static class Program
             ("settings round-trip and atomically replace the file", SettingsRoundTrip),
             ("corrupt settings recover defaults without app-data logging", CorruptSettingsRecover),
             ("invalid settings normalize and valid option values are preserved", SettingsNormalizeValues),
-            ("weather artwork assets load and forecast layout has 12-hour and 5-day views", ForecastLayoutAndAssets)
+            ("tray icon is embedded with all Windows sizes", EmbeddedIconFrames),
+            ("weather artwork assets load and forecast layout has 12-hour and 5-day views", ForecastLayoutAndAssets),
+            ("forecast close is safe when closing triggers deactivation or another close", ForecastCloseRegression)
         };
         var failures = 0;
         foreach (var test in tests)
@@ -60,6 +62,24 @@ internal static class Program
         return failures == 0 ? 0 : 1;
     }
 
+    private static async Task ForecastCloseRegression()
+    {
+        var window = new ForecastWindow();
+        int closingCount = 0, closedCount = 0;
+        window.Closing += (_, _) =>
+        {
+            closingCount++;
+            window.DismissWhenInactive();
+            window.RequestClose();
+        };
+        window.Closed += (_, _) => closedCount++;
+        window.RequestClose();
+        window.RequestClose();
+        window.DismissWhenInactive();
+        await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        Equal(1, closingCount);
+        Equal(1, closedCount);
+    }
     private static async Task CacheCoordinateMatch()
     {
         var snapshot = await BuildFixtureSnapshot();
@@ -354,6 +374,20 @@ internal static class Program
             Equal(5, ((StackPanel)scroll.Content).Children.Count);
         }
         finally { window.Close(); }
+    }
+
+    private static Task EmbeddedIconFrames()
+    {
+        using var stream = typeof(App).Assembly.GetManifestResourceStream("WeatherWidget.Brand.Icon")
+            ?? throw new InvalidOperationException("Embedded tray icon resource was not found in the app assembly.");
+        var decoder = System.Windows.Media.Imaging.BitmapDecoder.Create(stream,
+            System.Windows.Media.Imaging.BitmapCreateOptions.PreservePixelFormat,
+            System.Windows.Media.Imaging.BitmapCacheOption.OnLoad);
+        var sizes = decoder.Frames.Select(frame => $"{frame.PixelWidth}x{frame.PixelHeight}").ToHashSet(StringComparer.Ordinal);
+        Equal(9, decoder.Frames.Count);
+        foreach (var size in new[] { "16x16", "20x20", "24x24", "32x32", "40x40", "48x48", "64x64", "128x128", "256x256" })
+            True(sizes.Contains(size), $"Embedded icon frame {size} was missing.");
+        return Task.CompletedTask;
     }
 
     private static string CollectText(DependencyObject root)

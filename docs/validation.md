@@ -47,3 +47,14 @@ Version 0.1.1: corrected desktop-owned popup launched as the packaged executable
 
 Owner confirmation after v0.1.1: the card is visible and clicking it opens the forecast. This verifies the main visibility regression is resolved in the owner's Windows session. Win+D, drag/lock and virtual-desktop behavior remain awaiting direct confirmation.
 
+
+## v0.1.2 crash and tray-icon corrections
+
+Owner reported a crash after opening the forecast and no custom tray icon. Windows .NET Runtime/Application Error records and shell.log identified an InvalidOperationException from the forecast Deactivated callback calling Close while the same window was already closing. The published Assets/Brand folder contained the PNG but not the ICO; the icon-loader log confirmed fallback due to the missing file.
+
+Fix: forecast dismissal is deferred, RequestClose is guarded throughout closing, and the App clears only the matching forecast reference before explicitly closing it. Escape, close button, toggle, city change and shutdown use the same guarded path. Added a closing-event regression that attempts a secondary close/dismiss and verifies one closing/closed event.
+
+Fix: tray ICO is an embedded assembly resource, cloned independently of its source stream. It no longer depends on a loose ICO being published. The embedded resource decodes all nine Windows frame sizes. The application harness now passes 13/13 groups; Release/self-contained publish passed with zero warnings/errors. Packaged v0.1.2 was launched; owner runtime stress confirmation remains pending.
+
+v0.1.2 executable SHA-256: 492B24A190A1C7B3F7A9B457065A935815D29FF6338FE14E73AA41908DB137AB.
+

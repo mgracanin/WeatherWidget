@@ -37,7 +37,7 @@ public sealed partial class App : System.Windows.Application
         Settings = AppSettings.Load();
         Weather = new WeatherController(Settings, Dispatcher);
         Weather.Changed += PresentationChanged;
-        AppSettings.Log("Starting WeatherWidget; OS " + Environment.OSVersion + "; inspect=" + InspectionMode);
+        AppSettings.Log("Starting WeatherWidget " + typeof(App).Assembly.GetName().Version + "; OS " + Environment.OSVersion + "; inspect=" + InspectionMode);
         showWait = ThreadPool.RegisterWaitForSingleObject(showEvent, (_, _) => Dispatcher.BeginInvoke(() => Recover(true)), null, Timeout.Infinite, false);
         exitWait = ThreadPool.RegisterWaitForSingleObject(exitEvent, (_, _) => Dispatcher.BeginInvoke(ExitWidget), null, Timeout.Infinite, false);
         trayIcon = LoadTrayIcon();
@@ -78,7 +78,7 @@ public sealed partial class App : System.Windows.Application
             Text("Dohvaćeno: ", "Fetched: ") + data.FetchedAtUtc.ToLocalTime().ToString("g", UiText.Culture(Settings.Language));
         System.Windows.MessageBox.Show((widget?.DesktopStatus ?? "Window unavailable.") + "\n\n" + fetched +
             "\n" + (Weather?.Error ?? "") + "\n\nOpen-Meteo · CC BY 4.0\n" + AppSettings.DataDirectory,
-            "WeatherWidget", MessageBoxButton.OK, MessageBoxImage.Information);
+            "WeatherWidget " + typeof(App).Assembly.GetName().Version, MessageBoxButton.OK, MessageBoxImage.Information);
     }
     private void Recover(bool requested)
     {
@@ -101,7 +101,7 @@ public sealed partial class App : System.Windows.Application
         exiting = true;
         recoveryTimer.Stop();
         StopLifecycle();
-        forecast?.Close();
+        CloseForecast();
         Weather?.Dispose();
         showWait?.Unregister(null); exitWait?.Unregister(null);
         tray?.Dispose();
@@ -112,11 +112,16 @@ public sealed partial class App : System.Windows.Application
     }
     private static System.Drawing.Icon? LoadTrayIcon()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Assets", "Brand", "weather-widget.ico");
-        try { return new System.Drawing.Icon(path); }
+        try
+        {
+            using var stream = typeof(App).Assembly.GetManifestResourceStream("WeatherWidget.Brand.Icon")
+                ?? throw new FileNotFoundException("The embedded WeatherWidget tray icon resource is missing.");
+            using var source = new System.Drawing.Icon(stream);
+            return (System.Drawing.Icon)source.Clone();
+        }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or System.Runtime.InteropServices.ExternalException)
         {
-            AppSettings.Log("WeatherWidget tray icon unavailable; using system fallback: " + ex.Message);
+            AppSettings.Log("WeatherWidget embedded tray icon unavailable; using system fallback: " + ex.Message);
             return null;
         }
     }

@@ -44,16 +44,22 @@ public sealed partial class App
             forecast.Update(data, Settings.Language, Settings.TemperatureUnit == "fahrenheit" ? "F":"C",
                 Settings.WindUnit switch { "ms"=>"m/s", "mph"=>"mph", _=>"km/h" }, Weather.Offline, Weather.Error);
     }
+    private void CloseForecast()
+    {
+        var panel = forecast;
+        forecast = null;
+        panel?.RequestClose();
+    }
     private void ToggleForecast()
     {
-        if (forecast != null) { forecast.Close(); return; }
+        if (forecast != null) { CloseForecast(); return; }
         if (Weather.Snapshot == null) { ShowStatus(); return; }
-        forecast=new ForecastWindow();
-        forecast.Closed += (_, _) => forecast=null;
-        forecast.Deactivated += (_, _) => forecast?.Close();
+        var panel = new ForecastWindow();
+        forecast = panel;
+        panel.Closed += (_, _) => { if (ReferenceEquals(forecast, panel)) forecast = null; };
         PresentationChanged();
-        forecast.Loaded += (_, _) => PositionForecast();
-        forecast.Show();
+        panel.Loaded += (_, _) => PositionForecast();
+        panel.Show();
     }
     private void PositionForecast()
     {
@@ -119,7 +125,7 @@ public sealed partial class App
     }
     private async void ChooseCity()
     {
-        forecast?.Close();
+        CloseForecast();
         var picker=new CityPicker(Weather.Client,Settings.Language,Settings.CityName);
         if (picker.ShowDialog()!=true || picker.SelectedLocation is not { } city) return;
         Settings.CityName=city.Name; Settings.Latitude=city.Latitude; Settings.Longitude=city.Longitude;

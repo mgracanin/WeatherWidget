@@ -14,6 +14,7 @@ internal sealed class ForecastWindow : Window
     private WeatherSnapshot? snapshot;
     private string language = "en", unit = "C", windUnit = "km/h";
     private bool offline, showDays;
+    private bool closing, dismissScheduled;
     private string? error;
     public ForecastWindow()
     {
@@ -23,7 +24,8 @@ internal sealed class ForecastWindow : Window
         ResizeMode = ResizeMode.NoResize; ShowInTaskbar = false;
         FontFamily = new FontFamily("Segoe UI");
         Content = new Viewbox { Child = scene, Stretch = Stretch.Uniform };
-        PreviewKeyDown += (_, e) => { if (e.Key == Key.Escape) { Close(); e.Handled = true; } };
+        Deactivated += (_, _) => DismissWhenInactive();
+        PreviewKeyDown += (_, e) => { if (e.Key == Key.Escape) { RequestClose(); e.Handled = true; } };
     }
     private void SetWindowIcon()
     {
@@ -36,8 +38,31 @@ internal sealed class ForecastWindow : Window
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         { AppSettings.Log("Forecast window icon unavailable: " + ex.Message); }
     }
+    internal void RequestClose()
+    {
+        if (closing) return;
+        closing = true;
+        try { Close(); } catch { closing = false; throw; }
+    }
+    protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        closing = true;
+        base.OnClosing(e);
+        if (e.Cancel) closing = false;
+    }
+    internal void DismissWhenInactive()
+    {
+        if (closing || dismissScheduled) return;
+        dismissScheduled = true;
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+        {
+            dismissScheduled = false;
+            if (!closing && IsVisible && !IsActive) RequestClose();
+        }));
+    }
     public void Update(WeatherSnapshot data, string lang, string temperatureUnit, string speedUnit, bool isOffline, string? lastError)
     {
+        if (closing) return;
         snapshot = data; language = lang; unit = temperatureUnit; windUnit = speedUnit; offline = isOffline; error = lastError;
         Render();
     }
@@ -51,7 +76,7 @@ internal sealed class ForecastWindow : Window
         bool expired = age >= TimeSpan.FromHours(6);
         Title = data.Location.Name + " — " + T("Prognoza", "Forecast");
         Put(Label(data.Location.Name, 22, 390, true), 40, 29);
-        var close = Button("×", T("Zatvori prognozu (Esc)", "Close forecast (Esc)"), (_, _) => Close());
+        var close = Button("×", T("Zatvori prognozu (Esc)", "Close forecast (Esc)"), (_, _) => RequestClose());
         close.Width = 28; close.Height = 28; Put(close, 460, 30);
         Put(Label(expired ? T("Podaci su prestari", "Weather too old") : ConditionCatalog.Description(data.Current.WeatherCode, data.Current.IsDay, UiText.Resolve(language)), 15, 280), 40, 65);
         var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, zone).DateTime);
