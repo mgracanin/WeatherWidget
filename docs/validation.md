@@ -88,3 +88,9 @@ v0.1.3 executable SHA-256: AE9B563D1683215D6BF5BBB324F51141B637AE36F30555218B4BD
 
 Owner confirmed v0.1.3: layout is consistent, detailed-window header movement works, and proportional resizing works for both windows. This verifies the owner-reported oversized/inconsistent/immovable layout issues are resolved in the packaged app. Win+D and virtual-desktop checks remain pending.
 
+
+## v0.2.0 review, efficiency and themes
+
+Release build and self-contained publish passed with zero warnings/errors. Core 10/10 and application 15/15 assertion groups passed on the final source, including closing reentrancy, unchanged-view reuse, theme persistence/repainting and malformed provider recovery. Aurora, Paper and Sunset use frozen weather-aware vector backgrounds in both sizes. Offscreen WPF fixture renders were inspected; these do not establish fresh native desktop interaction coverage.
+
+See review-and-performance.md and performance/ for findings, reproducible controlled allocation benchmarks and the short warm runtime observation. Existing owner acceptance of movement, resizing, Win+D and virtual desktops remains the native interaction evidence; Explorer restart and the broader mixed-DPI/monitor/logon matrix remain unverified.
