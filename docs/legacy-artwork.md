@@ -1,43 +1,53 @@
-# Optional Windows 7 artwork
+# Windows 7 gadget images
 
-WeatherWidget works out of the box with **seven original vector themes**. Modern and Classic are original glass-inspired designs; **Legacy Modern** and **Legacy Classic** are optional appearances using images you supply locally. Nothing is downloaded automatically, and no Microsoft gadget PNGs are included in the current source tree or v0.6 package.
+Modern and Classic come with new artwork and work straight away. **Legacy Modern** and **Legacy Classic** let you use your own copies of the old gadget images.
 
-## Before importing
+The images are not included with WeatherWidget. Import only where you have the necessary rights. A Windows 7 installation or a copyright credit does not, by itself, give permission to reuse or share Microsoft's artwork. [NOTICE.md](../NOTICE.md) has the relevant links.
 
-Only import files where your licence or permission allows this use. Access to a Windows 7 installation is not a new licence to copy its artwork into another product. Microsoft's Windows 7 terms, section 3(c), restrict sharing its images; attribution does not override those terms. This feature provides local image loading, not a licensing workaround. Imported files must not be committed or redistributed with WeatherWidget.
+## 1. Find the image folder
 
-## Find the images
-
-On a Windows 7 installation you are authorized to access, look for:
+On the Windows 7 PC, press **Win+R**, paste this path and press Enter:
 
 ```text
 C:\Program Files\Windows Sidebar\Gadgets\Weather.Gadget\images
 ```
 
-Other installations can use `C:\Program Files (x86)\Windows Sidebar\Gadgets\Weather.Gadget\images`, the `Windows Sidebar\Shared Gadgets` directory, or `%LOCALAPPDATA%\Microsoft\Windows Sidebar\Gadgets\Weather.Gadget\images`. Microsoft's gadget documentation identifies the system, shared and per-user gadget directories; the Weather.Gadget folder may not be present on every installation.
+If it is not there, check these locations:
 
-Use an existing image folder or, where permitted, copy its PNG files to a local folder on the Windows 11 PC. You do not need to install or run the old Sidebar/Gadget software. The importer reads only recognized PNG names: it does not run JavaScript, copy gadget executables or change Windows access controls. If you cannot read the source files, use an authorized readable copy; the importer does not bypass permissions.
+```text
+C:\Program Files (x86)\Windows Sidebar\Gadgets\Weather.Gadget\images
+C:\Program Files\Windows Sidebar\Shared Gadgets\Weather.Gadget\images
+%LOCALAPPDATA%\Microsoft\Windows Sidebar\Gadgets\Weather.Gadget\images
+```
 
-## Easiest: import from Settings
+If you are reading a Windows 7 drive from another PC, replace `C:` with that drive's letter. Some installations no longer have the Weather gadget files; the included themes work without them.
 
-1. Right-click the widget or tray icon → **Settings… → Appearance**.
-2. Expand **Optional legacy artwork** and click **Import legacy images…**.
-3. Select the `Weather.Gadget` folder or its `images` folder. A folder containing the supported PNGs directly also works.
-4. Read the imported-file count. Choose **Legacy Modern · local images** or **Legacy Classic · local images**, then **Apply**.
+Where permitted, copy the `images` folder to a local folder on your Windows 11 PC, for example `Documents\Weather gadget images`. You only need the PNGs. The old Sidebar/Gadget software does not need to be installed or running.
 
-Only recognized images are copied to your user profile. Your source folder is not modified. Importing files is independent of Apply/Cancel for preferences: cancelling Settings does not delete an imported local pack. Updates preserve your local images because they are outside the app and repository.
+## 2. Import the folder
 
-An incomplete pack still works: each missing/unreadable scene falls back to the corresponding original Modern or Classic artwork. If there is no compact sunny/partly-cloudy image, the imported expanded scene is fitted automatically. Optional `sun.png` and `partlycloudy.png` cards from an authorized existing WinPrognoza collection are also recognized. Select their containing folder as an additional import to merge them into the local pack.
+1. Right-click the widget or tray icon and choose **Settings…**.
+2. Open **Appearance** and expand **Optional legacy artwork**.
+3. Click **Import legacy images…**.
+4. Select your copied `images` folder. Selecting the parent `Weather.Gadget` folder also works.
+5. Check the imported-file count, then select **Legacy Modern · local images** or **Legacy Classic · local images** from the theme list.
+6. Click **Apply** or **Save and close**.
 
-## Manual copy
+**Classic · original** is the new built-in design. Choose **Legacy Classic · local images** to see your imported files. The same distinction applies to Modern.
 
-Click **Open local folder** in that Settings section, or open this path with Win+R:
+The import leaves your source files alone and keeps a copy in your user profile. Importing files is a separate action from saving preferences: Cancel closes Settings without changing the theme, but it does not remove files you have already imported.
+
+You can import another folder later to add to the same collection. Existing WinPrognoza cards named `sun.png` and `partlycloudy.png` are supported too, where you have the right to use them.
+
+## Manual copying
+
+In **Appearance → Optional legacy artwork**, click **Open local folder**. You can also open this path with Win+R:
 
 ```text
 %LOCALAPPDATA%\WeatherWidget\LegacyArtwork
 ```
 
-Create that folder if necessary. Copy supported files directly into it, preserving filenames—no nested `images` folder at the destination:
+Create the folder if necessary. Copy supported PNGs directly into it, keeping their names:
 
 ```text
 LegacyArtwork\
@@ -47,11 +57,25 @@ LegacyArtwork\
   ...
 ```
 
-Then click **Reload local images**, choose a Legacy theme and Apply. Restarting the widget also reloads local files. Remove the local PNGs and reload to return legacy options to their original-art fallback; selecting Modern or Classic always uses original art regardless of imports.
+Do not put another `images` folder inside `LegacyArtwork`. After copying, click **Reload local images**, choose a Legacy theme and Apply. Restarting the widget reloads them too.
 
-## Recognized filenames
+Your local collection is outside the app folder, so updates keep it. Selecting a built-in theme uses the included artwork. To stop using a local image, remove that PNG from `LegacyArtwork` and reload.
 
-The following sky names work with both `docked_` and `undocked_` prefixes:
+## If something looks wrong
+
+| What happens | What to check |
+| --- | --- |
+| No supported images found | Select `Weather.Gadget`, its `images` folder, or a folder containing the PNGs directly. |
+| Some weather uses the new artwork | The matching old image is missing or unreadable. The app fills the gap with the built-in design. |
+| Sunny cards look different from the old small card | If a compact image is missing, the larger sunny scene is fitted to the card. Optional compact images can be added later. |
+| Manual copies do not appear | Click **Reload local images** and make sure a **Legacy** theme is selected. |
+| A file is rejected | Copy it again from your source. Keep the original filename and PNG format. See the size limits below. |
+
+A failed disk write can leave some successfully copied images. Importing the folder again will merge the valid files.
+
+## Supported filenames
+
+These names work with both `docked_` and `undocked_` prefixes, followed by `.png`:
 
 ```text
 black_cloudy
@@ -65,8 +89,10 @@ black_snow
 black_thunderstorm
 ```
 
-Add `.png` to each filename, for example `undocked_black_snow.png`. Loading files are `docked-loading.png` and `undocked-loading.png`. Daytime files are `undocked_blue_sun.png` and `undocked_blue_partly-cloudy.png`, plus optional `docked_blue_sun.png`, `docked_blue_partly-cloudy.png`, `sun.png`, and `partlycloudy.png`.
+For example: `docked_black_cloudy.png` and `undocked_black_cloudy.png`.
 
-Other files and moon-phase variants are ignored. A PNG must be at most 1 MiB, no dimension above 1024 pixels and no more than 524,288 pixels in total. These limits cover the standard 130×67 and 264×194 gadget backgrounds. Invalid recognized files cause the import to stop before writing new files; correct the file or remove it from your selected source and retry. Missing/corrupt manually copied files fall back safely. A disk-write failure can leave some successfully imported images; retrying merges valid files.
+Loading images are `docked-loading.png` and `undocked-loading.png`. Daytime images are `undocked_blue_sun.png` and `undocked_blue_partly-cloudy.png`. The importer also accepts `docked_blue_sun.png`, `docked_blue_partly-cloudy.png`, `sun.png` and `partlycloudy.png` if available. Other filenames are ignored.
 
-[Microsoft gadget directories](https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/Win7Samples/winui/sidebar/IDesktopGadget/README.txt) · [Windows 7 licence terms](https://www.microsoft.com/content/dam/microsoft/usetm/documents/windows/7-professional/oem-pre-installed/Windows_7%20Professional_English.pdf) · [Microsoft permissions policy](https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/permissions)
+Each PNG must be at most **1 MiB**, with neither dimension above **1024 pixels** and no more than **524,288 pixels** in total. The usual 130×67 and 264×194 backgrounds fit within those limits. All recognized files are checked before copying begins.
+
+[Microsoft's gadget folder documentation](https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/Win7Samples/winui/sidebar/IDesktopGadget/README.txt) · [Windows 7 licence terms](https://www.microsoft.com/content/dam/microsoft/usetm/documents/windows/7-professional/oem-pre-installed/Windows_7%20Professional_English.pdf) · [Microsoft permissions policy](https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/permissions)

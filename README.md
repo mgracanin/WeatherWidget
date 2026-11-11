@@ -4,89 +4,118 @@
 
 <h1 align="center">WeatherWidget</h1>
 
-<p align="center">
-  A little weather for your Windows desktop.
-</p>
+<p align="center">The little weather widget I missed on Windows 11.</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/platform-Windows%2011-0078D4?logo=windows11&logoColor=white" alt="Windows 11">
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white" alt=".NET 10">
-  <img src="https://img.shields.io/badge/AI-none%20at%20runtime-555" alt="No AI services at runtime">
+  <img src="https://img.shields.io/badge/install-portable-397a52" alt="Portable app">
 </p>
 
-I got used to the little weather widgets on Windows 7, and for years I used XWidget for my forecast. When the old weather service stopped working, I decided to make a standalone widget for Windows 11. This is the result: a small Windows desktop companion built with C#, WPF and .NET 10. And no AI services at runtime—just the weather.
+I got used to the weather gadgets in Windows 7 and later used XWidget to keep a forecast on my desktop. When its weather service stopped working, I wanted something that felt familiar and worked on Windows 11. So I made WeatherWidget: a small desktop app built with C#, WPF and .NET 10.
 
-## Preview
+It sits where you leave it, shows the current weather, and opens a fuller forecast when you click it. There is a tray icon for quick access, and a separate Settings window for everything else.
 
-Theme previews with sample weather. Backgrounds change with the weather and time of day.
+## Download and run
+
+[**Download the latest Windows x64 release**](https://github.com/mgracanin/WeatherWidget/releases/latest)
+
+Extract the ZIP and run **WeatherWidget.exe**. Keep the **Assets** folder beside it. The .NET runtime is included, so you do not need to install the SDK or XWidget.
+
+Right-click the card or tray icon and open **Settings…** to choose your location. Click **Apply** to save your changes. Your city, theme, sizes and other preferences are remembered the next time you run the app.
+
+## Themes
+
+Seven themes are included: **Modern, Classic, Aurora, Paper, Sunset, Nordic and Forest**. Each has weather and day/night scenes for both the small card and the expanded forecast. The previews below show sample weather.
 
 | Modern | Classic | Aurora |
 | --- | --- | --- |
-| ![Modern theme, sample rain](docs/images/modern-rain.png) | ![Classic theme, sample sun](docs/images/classic-sun.png) | ![Aurora theme, sample rain](docs/images/aurora-rain.png) |
+| ![Modern theme](docs/images/modern-rain.png) | ![Classic theme](docs/images/classic-sun.png) | ![Aurora theme](docs/images/aurora-rain.png) |
 | **Paper** | **Sunset** | **Nordic** |
-| ![Paper theme, sample sun](docs/images/paper-sun.png) | ![Sunset theme, sample night](docs/images/sunset-night.png) | ![Nordic theme, sample snow](docs/images/nordic-snow.png) |
+| ![Paper theme](docs/images/paper-sun.png) | ![Sunset theme](docs/images/sunset-night.png) | ![Nordic theme](docs/images/nordic-snow.png) |
 
-Forest is shown with a sample temperature trend:
+**Forest**, with the temperature trend shown beside the current reading:
 
-![Forest theme with a sample temperature trend](docs/images/forest-trend.png)
+![Forest theme](docs/images/forest-trend.png)
 
-Click the card for hourly and five-day forecasts:
+Modern and Classic have new, glass-inspired artwork. If you have your own Windows 7 gadget images, two more choices—**Legacy Modern** and **Legacy Classic**—can use them. The old images are optional and are not included in the download.
 
-<img src="docs/images/forecast.png" alt="Expanded Forest forecast with sample weather" width="330">
+## Forecasts and reminders
 
-## Features
+Click the card to open the forecast:
 
-- **Seven original themes:** Modern, Classic, Aurora, Paper, Sunset, Nordic and Forest, plus two optional local legacy appearances.
-- **Small card, expanded forecast:** a 130 × 67 card that expands to a 330 × 243 forecast view. Drag to move; resize from the lower-right corner. It stays out of the taskbar and can be recovered from the tray.
-- **Forecasts at a glance:** current conditions, hourly forecast for the next 12 hours and a five-day forecast.
-- **Useful details:** feels-like temperature, humidity, wind, daily high and low, precipitation chance, and a three-hour temperature trend. The trend is hidden when data is stale, offline or unavailable.
-- **Locations:** search for a city and save up to ten locations. Only the active location is fetched.
-- **Optional location discovery:** ask Windows for a one-time location or request an approximate city from ipapi.co. Both actions are explicit; review the result and choose Apply to use it. There is no automatic fallback or background location tracking.
-- **Settings:** choose Croatian or English, temperature and wind units, appearance, desktop behavior and optional weather notifications. Settings changes support Apply and Cancel; notifications and startup with Windows are off by default.
-- **Rain and weather reminders:** a rain-soon indicator plus optional rain, frost-risk and strong-wind notifications. Choose quiet hours in Settings; repeated reminders are limited to one per type per six hours.
-- **Desktop controls:** lock the card, snap it to monitor work-area edges, choose always-on-top, or opt into startup with Windows.
-- **Quiet background behavior:** designed for low background use with software rendering. Weather updates use Open-Meteo; no ads, AI services or background location tracking.
+<img src="docs/images/forecast.png" alt="Expanded Forest forecast showing sample weather" width="330">
 
-## Getting started
+- Current temperature and conditions, feels-like temperature, humidity and wind.
+- The next 12 hours and a five-day forecast, with highs, lows and precipitation chances.
+- A **Rain soon** indicator when rain is likely in the next few hours.
+- A temperature trend for roughly three hours ahead: **↑ warming**, **↓ cooling**, **→ steady**.
+- Optional rain, frost-risk and strong-wind reminders, with quiet hours you can set yourself.
 
-Download the latest portable Windows x64 build from [Releases](https://github.com/mgracanin/WeatherWidget/releases/latest), extract it, and run `WeatherWidget.exe`. Keep the `Assets` folder beside the executable. The package includes the .NET runtime, so the target PC does not need the .NET SDK or XWidget installed.
+Weather normally refreshes every 15 minutes. If the connection fails, the last forecast stays available with an offline label. Older readings are marked stale and eventually hidden. The trend arrow appears only when fresh forecast data is available.
 
-The widget starts in the notification area. Right-click it or its tray icon to open Settings and other quick actions. Startup with Windows is optional and off by default.
+Reminders are off by default. When enabled, each type is limited to one reminder every six hours; Windows notification settings can also silence them.
 
-## Make it yours
+## Using Windows 7 gadget images
 
-Open **Settings…** from the card or tray menu:
+Use **Legacy Modern** or **Legacy Classic** for the old artwork. **Modern** and **Classic** always use the new artwork that comes with the app.
 
-| Section | What you can change |
+1. Find the `Weather.Gadget\images` folder on a Windows 7 installation. The usual path is:
+
+   ```text
+   C:\Program Files\Windows Sidebar\Gadgets\Weather.Gadget\images
+   ```
+
+2. Where your rights allow it, copy that image folder to your Windows 11 PC.
+3. Open **Settings → Appearance → Optional legacy artwork → Import legacy images…**.
+4. Select the copied `images` folder—or its parent `Weather.Gadget` folder.
+5. Choose **Legacy Modern · local images** or **Legacy Classic · local images**, then click **Apply**.
+
+The app copies the supported PNGs into your user profile and leaves the source folder alone. Missing images use the new artwork, so a partial set still works. Your imported images survive app updates.
+
+Microsoft's artwork is not included with WeatherWidget. Access to Windows 7 and an attribution notice do not, by themselves, grant permission to reuse or redistribute it. Use only images you have the right to use.
+
+[**Full import guide: other folder locations, manual copying and troubleshooting**](docs/legacy-artwork.md)
+
+## Settings
+
+| Section | What you will find |
 | --- | --- |
-| **Location & units** | Search cities, manage saved locations, discover a location, choose temperature/wind units and language. |
-| **Appearance** | Preview all seven themes and adjust compact/forecast sizes independently. |
-| **Desktop** | Lock position, snap to edges, stay on top, or start with Windows. |
-| **Notifications** | Enable weather reminders and set quiet hours in your computer's local time. |
+| **Location & units** | City search, up to ten saved locations, Windows/IP location discovery, temperature and wind units, and Croatian/English language choices. |
+| **Appearance** | Theme previews, separate card/forecast sizes, and the optional legacy image importer. |
+| **Desktop** | Position lock, edge snapping, always-on-top and startup with Windows. |
+| **Notifications** | Weather reminders and quiet hours, using your computer's local time. |
 
-**Apply** saves and updates the widget. **Save and close** also closes Settings. **Cancel**, Escape or × discards edits since the last Apply. Preferences, the selected location and saved locations are restored on the next run. Data is stored in `%LOCALAPPDATA%\WeatherWidget`.
+**Apply** saves and updates the widget. **Save and close** does the same and closes Settings. **Cancel**, Escape or × discards edits made since the last Apply. Reopen Settings after changing the language to update the window's labels.
+
+For saved locations, choose a city and click **Save current**, then Apply. Only the selected location downloads a forecast. Location discovery runs when you ask for it: Windows uses its permission controls, while IP lookup gives an approximate city and may be wrong with a VPN or an ISP gateway. Review the result before applying it. [More about locations](docs/locations.md).
+
+## Moving and resizing
 
 | Action | Result |
 | --- | --- |
 | Click the card | Open or close the forecast. |
-| Drag the card | Move it; its position is remembered. |
-| Drag a lower-right corner | Resize either window proportionally. |
-| Ctrl + mouse wheel over the card | Adjust the compact size. |
-| Drag the forecast header | Move the detailed window. |
+| Drag the card | Move it; the position is remembered. |
+| Drag a lower-right corner | Resize either window without changing its proportions. |
+| Ctrl + mouse wheel over the card | Change the card's size. |
+| Drag the forecast header | Move the expanded view. |
 | Escape, × or click outside the forecast | Close the forecast. |
-| Double-click the tray icon | Recover the card on screen. |
-| Right-click → Exit | Quit completely. |
+| Double-click the tray icon | Bring the card back on screen. |
+| Right-click → Exit | Quit the app. |
 
-Weather normally refreshes every 15 minutes. Network failures keep the last forecast with an offline label; older current readings are marked stale and eventually hidden. The trend arrow describes roughly three hours ahead: **↑ warming**, **↓ cooling**, **→ steady**. It is omitted when fresh forecast data is unavailable.
-## Weather data and location privacy
+The card starts at **130 × 67** and the forecast at about **330 × 243**. Neither adds a taskbar button. Edge snapping is on by default; startup with Windows is off. You can change both in Settings.
 
-Forecasts and city search use [Open-Meteo](https://open-meteo.com/). The selected city's coordinates are sent to the forecast service. City search uses Open-Meteo's geocoding service, based on GeoNames. See [NOTICE.md](NOTICE.md) for provider terms and artwork ownership information. The bundled backgrounds are original vector artwork. Optional user-supplied legacy images are not included; see the [local import guide](docs/legacy-artwork.md) and [asset guide](docs/assets.md).
+## Data and privacy
 
-Location discovery does not run at startup or in the background. Windows discovery uses its permission controls. IP-based estimation contacts [ipapi.co](https://ipapi.co/) only when you choose that action; VPNs and ISP routing can make the estimate inaccurate. Discovery results are drafts until you apply them. See the [location guide](docs/locations.md) for permission help and method details.
+Forecasts and city search come from [Open-Meteo](https://open-meteo.com/), with geocoding based on GeoNames. The selected location's coordinates are sent to the forecast service. An IP estimate contacts [ipapi.co](https://ipapi.co/) only when you choose that option. There is no background location tracking.
+
+Preferences, saved locations and the weather cache are kept in `%LOCALAPPDATA%\WeatherWidget`. Imported artwork goes in its `LegacyArtwork` subfolder.
+
+See [NOTICE.md](NOTICE.md) for provider terms and artwork credits, and the [artwork guide](docs/assets.md) for the difference between included and imported themes.
 
 ## Build from source
 
-You need Windows and the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0). Clone the repository and run:
+You need Windows and the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0):
 
 ```powershell
 git clone https://github.com/mgracanin/WeatherWidget.git
@@ -94,19 +123,13 @@ cd WeatherWidget
 .\build.ps1 -Test -Publish
 ```
 
-The script can also use a local SDK in `tools/dotnet` when available. The portable build is written under `artifacts/win-x64/`.
+The portable app is written to `artifacts\win-x64`. Copy that folder's contents together when moving it to another PC. Close a copy running from that folder before publishing over it.
 
-For an ordinary development build or just the checks:
+For a development build or just the checks:
 
 ```powershell
 .\build.ps1
 .\build.ps1 -Test
 ```
 
-The tests use local weather/location fixtures and do not request your Windows location, contact the IP provider, or change your saved preferences. The Windows API integration builds automatically; no Windows App SDK application or XWidget installation is required.
-
-### Want the old gadget look?
-
-Modern and Classic now ship as original, glass-inspired designs. **Legacy Modern** and **Legacy Classic** can use your own local image pack. In **Settings → Appearance → Optional legacy artwork**, select **Import legacy images…**, choose an authorized `Weather.Gadget`/`images` folder, select a Legacy theme and Apply. No old scripts or gadget software are run. Missing images use original artwork automatically.
-
-Your local pack stays in your user profile and is never included in builds or releases. Access to Windows 7 is not itself permission to reuse its artwork; import only where your rights allow it. [Find images and import them step by step](docs/legacy-artwork.md).
+The script uses `tools\dotnet\dotnet.exe` if a local SDK is present; otherwise it uses the installed SDK. Tests use saved responses and temporary files. They do not request your location or change your preferences.

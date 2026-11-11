@@ -1,15 +1,23 @@
-# Artwork and asset inventory
+# Themes and artwork
 
-The current application bundles **seven original vector themes**: Modern, Classic, Aurora, Paper, Sunset, Nordic and Forest. Modern and Classic use new glass-inspired sky compositions and weather symbols; they do not load or trace the removed Microsoft bitmaps. The vector renderer creates compact/expanded and day/night/weather scenes on demand, freezes them and caches a finite set.
+WeatherWidget includes seven themes: **Modern, Classic, Aurora, Paper, Sunset, Nordic and Forest**. They use artwork drawn for this app, with matching small and expanded scenes for different weather and times of day.
 
-`Assets/Brand` retains the editable SVG, generated window-icon PNG and application/embedded ICO. Different formats serve different purposes. The current tree and v0.6 package contain no legacy Weather.Gadget or WinPrognoza weather PNGs. README previews show the original themes with sample data.
+Modern has a dark blue/grey sky and subtle glass effects. Classic has a brighter blue glass look. Aurora uses teal, Paper is light and simple, Sunset has warm colours, Nordic uses pale blues, and Forest has green woodland silhouettes.
 
-Two additional choices—Legacy Modern and Legacy Classic—load optional user-provided PNGs from `%LOCALAPPDATA%\WeatherWidget\LegacyArtwork`. That folder is outside the repository/package and is preserved by upgrades. Unavailable or invalid images fall back per scene to original artwork. Importing/reloading invalidates presentation caches without background polling. See the [local import guide](legacy-artwork.md).
+## The two Legacy choices
 
-## Provenance and rights
+**Legacy Modern** and **Legacy Classic** use old gadget images you add yourself. Those images are optional and are not included in the current download. Missing or unreadable files use the corresponding built-in artwork.
 
-The old Weather.Gadget manifest identifies Microsoft Corporation as author and includes © 2009. Any locally imported original artwork retains its original rights. Credits record provenance and do not grant permission, imply endorsement or authorize redistribution. Access to Windows 7 alone is not an import licence. Users must establish the appropriate rights for their use and must not distribute their local legacy pack with this application.
+Your images stay in `%LOCALAPPDATA%\WeatherWidget\LegacyArtwork`, so you can update the app without losing them. The [import guide](legacy-artwork.md) covers Windows 7 folder locations, the Settings importer and manual copying.
 
-Older private tags/releases may retain earlier bundled legacy files; the removal described here applies to the current source tree and v0.6 release, without rewriting repository history.
+## Files included in the project
+
+The backgrounds are drawn in code. `Assets\Brand` holds the app icon as editable SVG, PNG and ICO. README previews show sample weather in the included themes.
+
+The current release does not include the old Weather.Gadget or WinPrognoza weather PNGs. Earlier private releases may still contain the files they originally shipped with.
+
+## Credits and rights
+
+The original Windows 7 Weather gadget manifest names Microsoft Corporation as author and includes © 2009. Any old images you import keep their original owners' rights. A credit does not grant permission to copy or redistribute them; use only files you have the right to use, and do not include local image collections in builds or releases.
 
 [Notices](../NOTICE.md) · [Microsoft permissions policy](https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/permissions)
