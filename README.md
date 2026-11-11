@@ -23,7 +23,7 @@ Theme previews with sample weather. Backgrounds change with the weather and time
 | Modern | Classic | Aurora |
 | --- | --- | --- |
 | ![Modern theme, sample rain](docs/images/modern-rain.png) | ![Classic theme, sample sun](docs/images/classic-sun.png) | ![Aurora theme, sample rain](docs/images/aurora-rain.png) |
-| Paper | Sunset | Nordic |
+| **Paper** | **Sunset** | **Nordic** |
 | ![Paper theme, sample sun](docs/images/paper-sun.png) | ![Sunset theme, sample night](docs/images/sunset-night.png) | ![Nordic theme, sample snow](docs/images/nordic-snow.png) |
 
 Forest is shown with a sample temperature trend:
@@ -33,6 +33,7 @@ Forest is shown with a sample temperature trend:
 Click the card for hourly and five-day forecasts:
 
 <img src="docs/images/forecast.png" alt="Expanded Forest forecast with sample weather" width="330">
+
 ## Features
 
 - **Seven original themes:** Modern, Classic, Aurora, Paper, Sunset, Nordic and Forest, plus two optional local legacy appearances.
