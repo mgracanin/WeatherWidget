@@ -31,6 +31,8 @@ internal static class PerfChecks
                 panel.Update(data??snapshot,"en",unit,"km/h",offline,null,at);
             Canvas Content()=>((Canvas)((Viewbox)panel.Content).Child).Children.OfType<Canvas>().Single();
             Update(now);
+            var priorArt=Content().Children[0];WeatherArt.ReloadLegacy();Update(now);
+            Require(!ReferenceEquals(priorArt,Content().Children[0]),"Artwork reload was skipped by forecast memoization.");
             var first=Content().Children[0];Update(now.AddMinutes(1));
             Require(ReferenceEquals(first,Content().Children[0]),"Healthy minute tick rebuilt forecast children.");
             Update(now.AddMinutes(6));

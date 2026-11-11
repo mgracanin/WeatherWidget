@@ -9,7 +9,5 @@
   <ItemGroup>
     <ProjectReference Include="../../src/WeatherWidget/WeatherWidget.csproj" />
     <Content Include="../WeatherWidget.Core.Tests/fixtures/Zagreb-live.json" Link="fixtures/Zagreb-live.json" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="../../Assets/WinPrognoza/slike/*.png" Link="Assets/WinPrognoza/slike/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="../../Assets/WeatherGadget/*.png" Link="Assets/WeatherGadget/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

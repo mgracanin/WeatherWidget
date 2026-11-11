@@ -1,6 +1,6 @@
 namespace WeatherWidget.Core;
 
-/// <summary>Maps Open-Meteo WMO codes to the bundled WinPrognoza artwork and localized short labels.</summary>
+/// <summary>Maps Open-Meteo WMO codes to legacy filename identifiers and localized labels; legacy image files are not bundled.</summary>
 public static class ConditionCatalog
 {
     public static string Artwork(int code, bool day) => code switch

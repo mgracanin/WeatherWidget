@@ -109,10 +109,11 @@ internal sealed partial class SettingsWindow : Window
         Fill(themeChoice, ThemeCatalog.All.Select(theme => (theme.Id, UiText.Resolve(language) == "hr" ? theme.LabelHr : theme.LabelEn)).ToArray());
         themeChoice.SelectedValue = draft.Theme;
         panel.Children.Add(Labeled(T("Odaberite temu", "Choose a theme"), themeChoice));
-        themePreview.Width = 194; themePreview.Height = 100; themePreview.Stretch = Stretch.Uniform; themePreview.Margin = new Thickness(0, 5, 0, 12);
+        themePreview.Width = 130; themePreview.Height = 67; themePreview.Stretch = Stretch.Uniform; themePreview.Margin = new Thickness(0, 5, 0, 12);
         themePreview.HorizontalAlignment = HorizontalAlignment.Left;
         AutomationProperties.SetName(themePreview, T("Pregled odabrane teme", "Selected theme preview"));
         panel.Children.Add(themePreview);
+        AddLegacyControls(panel);
         panel.Children.Add(Section(T("Veličina", "Size")));
         ConfigureSlider(cardScale, .5, 3, draft.Scale);
         panel.Children.Add(SliderRow(T("Widget", "Widget"), cardScale, cardScaleValue));

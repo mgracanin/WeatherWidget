@@ -28,6 +28,10 @@ if ($Publish) {
     & $dotnet publish src\WeatherWidget -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -o artifacts\win-x64 --nologo
     if ($LASTEXITCODE -ne 0) { throw 'Publish failed.' }
     Copy-Item README.md,NOTICE.md -Destination artifacts\win-x64
+    $docsOutput=Join-Path $PSScriptRoot 'artifacts\win-x64\docs'
+    New-Item -ItemType Directory -Force -Path (Join-Path $docsOutput 'images') | Out-Null
+    foreach($name in @('assets.md','locations.md','legacy-artwork.md')) {Copy-Item -LiteralPath (Join-Path (Join-Path $PSScriptRoot 'docs') $name) -Destination $docsOutput}
+    Copy-Item -Path (Join-Path $PSScriptRoot 'docs\images\*.png') -Destination (Join-Path $docsOutput 'images')
     $sdkDirectory = Split-Path $dotnet
     foreach ($notice in @("LICENSE.txt", "ThirdPartyNotices.txt")) {
         $noticePath = Join-Path $sdkDirectory $notice

@@ -26,7 +26,7 @@ internal sealed class ForecastWindow : Window
     private WeatherSnapshot? renderedSnapshot;
     private ForecastState? renderedState;
     private readonly record struct ForecastState(string Theme,string Language, string Unit, string WindUnit, bool Offline,
-        string? Error, bool ShowDays, bool Expired, bool Stale, int AgeMinute, DateOnly Today, DateTimeOffset? FirstHour);
+        string? Error, bool ShowDays, bool Expired, bool Stale, int AgeMinute, DateOnly Today, DateTimeOffset? FirstHour, int ArtGeneration);
 
     public ForecastWindow(AppSettings? preferences=null)
     {
@@ -130,7 +130,7 @@ internal sealed class ForecastWindow : Window
         var firstHour=showDays ? null : data.Hourly.FirstOrDefault(h=>h.TimeUtc>=now.AddHours(-1))?.TimeUtc;
         var nextTheme=ThemeCatalog.Get(preferences?.Theme);
         var state=new ForecastState(nextTheme.Id,UiText.Resolve(language),unit,windUnit,offline,error,showDays,expired,
-            age>=TimeSpan.FromHours(1),offline || age>=TimeSpan.FromHours(1) ? Math.Max(0,(int)age.TotalMinutes):0,today,firstHour);
+            age>=TimeSpan.FromHours(1),offline || age>=TimeSpan.FromHours(1) ? Math.Max(0,(int)age.TotalMinutes):0,today,firstHour,WeatherArt.Generation);
         if(ReferenceEquals(renderedSnapshot,data) && renderedState==state) return;
         theme=nextTheme;resizeGrip.Foreground=theme.ForegroundBrush;
         content.Children.Clear();
@@ -228,5 +228,3 @@ internal sealed class ForecastWindow : Window
     private string Temp(double c)=>Math.Round(unit=="F"?c*9/5+32:c).ToString(UiText.Culture(language))+"°"+unit;
     private string Wind(double kmh)=>(windUnit=="m/s"?kmh/3.6:windUnit=="mph"?kmh/1.609344:kmh).ToString("0",UiText.Culture(language))+" "+windUnit;
 }
-
-

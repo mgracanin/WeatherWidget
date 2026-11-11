@@ -19,8 +19,10 @@ internal static class ThemeCatalog
 {
     private static readonly IReadOnlyList<ThemeDefinition> themes =
     [
-        new("modern", "Moderna", "Modern", Colors.White, Color.FromRgb(221, 231, 242), Color.FromRgb(113, 194, 255), true),
-        new("classic", "Klasična", "Classic", Colors.White, Color.FromRgb(232, 239, 247), Color.FromRgb(255, 211, 94), true),
+        new("modern", "Moderna · izvorna", "Modern · original", Colors.White, Color.FromRgb(221, 231, 242), Color.FromRgb(113, 194, 255), true),
+        new("classic", "Klasična · izvorna", "Classic · original", Colors.White, Color.FromRgb(232, 239, 247), Color.FromRgb(255, 211, 94), true),
+        new("legacy-modern", "Stara moderna · lokalne slike", "Legacy Modern · local images", Colors.White, Color.FromRgb(221,231,242), Color.FromRgb(113,194,255), true),
+        new("legacy-classic", "Stara klasična · lokalne slike", "Legacy Classic · local images", Colors.White, Color.FromRgb(232,239,247), Color.FromRgb(255,211,94), true),
         new("aurora", "Polarna svjetlost", "Aurora", Color.FromRgb(245, 253, 252), Color.FromRgb(193, 222, 220), Color.FromRgb(101, 231, 204), false),
         new("paper", "Papir", "Paper", Color.FromRgb(35, 47, 48), Color.FromRgb(81, 96, 93), Color.FromRgb(194, 111, 57), false),
         new("sunset", "Zalazak sunca", "Sunset", Color.FromRgb(255, 248, 235), Color.FromRgb(226, 212, 196), Color.FromRgb(255, 183, 103), false),

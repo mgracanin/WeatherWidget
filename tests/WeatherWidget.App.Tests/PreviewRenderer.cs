@@ -131,9 +131,8 @@ internal static class PreviewRenderer
                 Equal(130d, card.Width);
                 Equal(67d, card.Height);
                 var art = card.Children.OfType<Image>().Single();
-                Equal("docked_black_cloudy.png", Path.GetFileName(((BitmapImage)art.Source!).UriSource.LocalPath));
-                Equal(130, ((BitmapSource)art.Source).PixelWidth);
-                Equal(67, ((BitmapSource)art.Source).PixelHeight);
+                if(art.Source is not DrawingImage {IsFrozen:true})throw new Exception("Original theme bitmap dependency.");
+                Equal(130d,art.Source.Width);Equal(67d,art.Source.Height);
             }
             finally
             {

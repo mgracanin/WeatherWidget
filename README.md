@@ -35,7 +35,7 @@ Click the card for hourly and five-day forecasts:
 <img src="docs/images/forecast.png" alt="Expanded Forest forecast with sample weather" width="330">
 ## Features
 
-- **Seven themes:** Modern, Classic, Aurora, Paper, Sunset, Nordic and Forest.
+- **Seven original themes:** Modern, Classic, Aurora, Paper, Sunset, Nordic and Forest, plus two optional local legacy appearances.
 - **Small card, expanded forecast:** a 130 × 67 card that expands to a 330 × 243 forecast view. Drag to move; resize from the lower-right corner. It stays out of the taskbar and can be recovered from the tray.
 - **Forecasts at a glance:** current conditions, hourly forecast for the next 12 hours and a five-day forecast.
 - **Useful details:** feels-like temperature, humidity, wind, daily high and low, precipitation chance, and a three-hour temperature trend. The trend is hidden when data is stale, offline or unavailable.
@@ -79,7 +79,7 @@ Open **Settings…** from the card or tray menu:
 Weather normally refreshes every 15 minutes. Network failures keep the last forecast with an offline label; older current readings are marked stale and eventually hidden. The trend arrow describes roughly three hours ahead: **↑ warming**, **↓ cooling**, **→ steady**. It is omitted when fresh forecast data is unavailable.
 ## Weather data and location privacy
 
-Forecasts and city search use [Open-Meteo](https://open-meteo.com/). The selected city's coordinates are sent to the forecast service. City search uses Open-Meteo's geocoding service, based on GeoNames. See [NOTICE.md](NOTICE.md) for provider terms and artwork ownership information. The original Windows 7 gadget backgrounds are credited to Microsoft; attribution alone is not redistribution permission. See the [asset and rights guide](docs/assets.md).
+Forecasts and city search use [Open-Meteo](https://open-meteo.com/). The selected city's coordinates are sent to the forecast service. City search uses Open-Meteo's geocoding service, based on GeoNames. See [NOTICE.md](NOTICE.md) for provider terms and artwork ownership information. The bundled backgrounds are original vector artwork. Optional user-supplied legacy images are not included; see the [local import guide](docs/legacy-artwork.md) and [asset guide](docs/assets.md).
 
 Location discovery does not run at startup or in the background. Windows discovery uses its permission controls. IP-based estimation contacts [ipapi.co](https://ipapi.co/) only when you choose that action; VPNs and ISP routing can make the estimate inaccurate. Discovery results are drafts until you apply them. See the [location guide](docs/locations.md) for permission help and method details.
 
@@ -103,3 +103,9 @@ For an ordinary development build or just the checks:
 ```
 
 The tests use local weather/location fixtures and do not request your Windows location, contact the IP provider, or change your saved preferences. The Windows API integration builds automatically; no Windows App SDK application or XWidget installation is required.
+
+### Want the old gadget look?
+
+Modern and Classic now ship as original, glass-inspired designs. **Legacy Modern** and **Legacy Classic** can use your own local image pack. In **Settings → Appearance → Optional legacy artwork**, select **Import legacy images…**, choose an authorized `Weather.Gadget`/`images` folder, select a Legacy theme and Apply. No old scripts or gadget software are run. Missing images use original artwork automatically.
+
+Your local pack stays in your user profile and is never included in builds or releases. Access to Windows 7 is not itself permission to reuse its artwork; import only where your rights allow it. [Find images and import them step by step](docs/legacy-artwork.md).

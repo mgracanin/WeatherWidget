@@ -20,6 +20,7 @@ internal static class Program
     [STAThread]
     private static void Main(string[] args)
     {
+        LegacyArtwork.RootOverride=Path.Combine(Path.GetTempPath(),"WeatherWidgetNoLegacy-"+Guid.NewGuid().ToString("N"));
         _ = PreviewRenderer.FixtureApp;
         fixture = File.ReadAllText(FixturePath);
         var dispatcher = Dispatcher.CurrentDispatcher;
@@ -80,7 +81,7 @@ internal static class Program
             ("weather artwork assets load and forecast layout has 12-hour and 5-day views", ForecastLayoutAndAssets),
             ("forecast close is safe when closing triggers deactivation or another close", ForecastCloseRegression),
             ("unchanged presentation reuse and visible state boundaries", () => PerfChecks.PresentationReuse(fixture)),
-            ("seven themes persist, reuse frozen artwork and repaint correctly", () => ThemeChecks.Run(fixture)),
+            ("nine theme choices persist, reuse frozen artwork and repaint correctly", () => ThemeChecks.Run(fixture)),
             ("tray menu opens on the first request and refreshes checked options", TrayFirstOpen),
             ("rain-soon resolution, freshness and precipitation types", ExtraChecks.Rain),
             ("notification opt-in, quiet hours, persisted cooldown and city changes", ExtraChecks.Notifications),
@@ -91,7 +92,8 @@ internal static class Program
             ("settings controls apply draft choices, cancel edits and retain failed saves", SettingsChecks.Editor),
             ("saved locations persist, normalize and isolate drafts; temperature trends respect freshness", LocationPreferenceChecks.Run),
             ("IP discovery validates bounded HTTPS responses and respects Windows denial", LocationDiscoveryChecks.Provider),
-            ("discovery is explicit, drafts results and cancels on editor close", LocationDiscoveryChecks.Editor)
+            ("discovery is explicit, drafts results and cancels on editor close", LocationDiscoveryChecks.Editor),
+            ("local legacy import validates PNGs, reloads art and safely falls back", LegacyArtworkChecks.Run)
         };
         var failures = 0;
         foreach (var test in tests)
@@ -365,35 +367,14 @@ internal static class Program
 
     private static async Task ForecastLayoutAndAssets()
     {
-        var smallAssets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var largeAssets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        for (var code = 0; code <= 99; code++)
-        foreach (var day in new[] { false, true })
+        for(int code=0;code<=99;code++)foreach(bool day in new[]{true,false})foreach(bool expanded in new[]{true,false})
         {
-            var small = WeatherArt.Background(code, day, expanded: false);
-            var large = WeatherArt.Background(code, day, expanded: true);
-            True(File.Exists(small.UriSource!.LocalPath), $"small asset missing for code {code}, day={day}: {small.UriSource.LocalPath}");
-            True(File.Exists(large.UriSource!.LocalPath), $"large asset missing for code {code}, day={day}: {large.UriSource.LocalPath}");
-            True(small.IsFrozen && small.PixelWidth > 0 && small.PixelHeight > 0, $"small bitmap did not load for code {code}, day={day}");
-            True(large.IsFrozen && large.PixelWidth > 0 && large.PixelHeight > 0, $"large bitmap did not load for code {code}, day={day}");
-            smallAssets.Add(small.UriSource.LocalPath);
-            largeAssets.Add(large.UriSource.LocalPath);
+            var art=WeatherArt.Background(code,day,expanded);
+            True(art is System.Windows.Media.DrawingImage {IsFrozen:true},"Original art must be frozen vector scenes.");
+            Equal(expanded?264d:130d,art.Width);Equal(expanded?194d:67d,art.Height);
         }
-        True(smallAssets.Count > 1 && largeAssets.Count > 1, $"Expected mapped backgrounds, found {smallAssets.Count} small and {largeAssets.Count} large assets.");
-        var used=new HashSet<string>(smallAssets.Concat(largeAssets),StringComparer.OrdinalIgnoreCase);
-        var published=Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory,"Assets","WeatherGadget"),"*.png")
-            .Concat(Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory,"Assets","WinPrognoza","slike"),"*.png")).ToArray();
-        True(used.SetEquals(published),"Weather asset payload contains unused or missing images.");
-        var hashes=published.Select(path=>Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path))));
-        Equal(published.Length,hashes.Distinct(StringComparer.Ordinal).Count());
-        var compactBackground = WeatherArt.Background(3, false, expanded: false);
-        var largeBackground = WeatherArt.Background(3, false, expanded: true);
-        Equal("docked_black_cloudy.png", Path.GetFileName(compactBackground.UriSource!.LocalPath));
-        Equal(130, compactBackground.PixelWidth);
-        Equal(67, compactBackground.PixelHeight);
-        Equal("undocked_black_cloudy.png", Path.GetFileName(largeBackground.UriSource!.LocalPath));
-        Equal(264, largeBackground.PixelWidth);
-        Equal(194, largeBackground.PixelHeight);
+        True((!Directory.Exists(Path.Combine(AppContext.BaseDirectory,"Assets","WeatherGadget")) || !Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory,"Assets","WeatherGadget"),"*",SearchOption.AllDirectories).Any()),"Legacy images must not ship.");
+        True((!Directory.Exists(Path.Combine(AppContext.BaseDirectory,"Assets","WinPrognoza")) || !Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory,"Assets","WinPrognoza"),"*",SearchOption.AllDirectories).Any()),"Legacy cards must not ship.");
         await PreviewRenderer.VerifyCompactCardLayoutAsync(fixture);
 
         var source = await BuildFixtureSnapshot();
@@ -423,8 +404,8 @@ internal static class Program
             var background = content.Children.OfType<Image>().Single();
             Equal(330d, background.Width);
             Equal(242.5d, background.Height);
-            Equal(264, ((System.Windows.Media.Imaging.BitmapSource)background.Source).PixelWidth);
-            Equal(194, ((System.Windows.Media.Imaging.BitmapSource)background.Source).PixelHeight);
+            Equal(264d, background.Source.Width);
+            Equal(194d, background.Source.Height);
             var scroll = content.Children.OfType<ScrollViewer>().Single();
             Equal(12, ((StackPanel)scroll.Content).Children.Count);
             var labels = CollectText(scene);

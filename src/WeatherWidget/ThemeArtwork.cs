@@ -35,7 +35,16 @@ internal static class NewThemeArtwork
             : Gradient(p.Base, p.Deep, new Point(0, 0), new Point(1, 1));
         dc.DrawRoundedRectangle(background, null, new Rect(0, 0, w, h), expanded ? 18 : 12, expanded ? 18 : 12);
 
-        if (theme == "aurora")
+        if(theme is "modern" or "classic")
+        {
+            // Original glass-inspired composition: sky, curved horizon and restrained reflections.
+            dc.DrawEllipse(Brush(p.Glow,.14),null,new Point(w*.19,h*.39),w*.43,h*.68);
+            dc.PushTransform(new ScaleTransform(w/200,h/100));
+            dc.DrawGeometry(Brush(p.Deep,.48),null,Path("M0,68 C46,49 88,83 131,64 C163,50 180,57 200,46 L200,100 L0,100 Z"));dc.Pop();
+            if(theme=="classic")dc.DrawRoundedRectangle(Gradient(Colors.White,Color.FromArgb(0,255,255,255),new Point(0,0),new Point(0,1),.15),null,new Rect(3,3,w-6,h*.48),9,9);
+            else dc.DrawLine(Pen(p.Edge,.23,1),new Point(7,h*.64),new Point(w-7,h*.64));
+        }
+        else if (theme == "aurora")
         {
             dc.DrawEllipse(Brush(p.Glow, .30), null, new Point(w * .36, h * .22), w * .44, h * .52);
             dc.DrawRoundedRectangle(Gradient(p.Glow, p.Glow2, new Point(0, 0), new Point(1, 1), .28), null,
@@ -257,6 +266,8 @@ internal static class NewThemeArtwork
     {
         public static Palette For(string theme, bool day) => theme switch
         {
+            "modern" => For("aurora",day) with {Base=day?Color.FromRgb(40,83,113):Color.FromRgb(24,43,65),Deep=Color.FromRgb(12,27,44),Glow=Color.FromRgb(124,191,220),Glow2=Color.FromRgb(78,125,161),Accent=Color.FromRgb(250,205,116),Cloud=Color.FromRgb(232,240,245)},
+            "classic" => For("aurora",day) with {Base=day?Color.FromRgb(27,122,168):Color.FromRgb(19,58,101),Deep=Color.FromRgb(8,43,78),Glow=Color.FromRgb(255,215,132),Glow2=Color.FromRgb(105,186,222),Accent=Color.FromRgb(247,210,124),Cloud=Color.FromRgb(240,247,252)},
             "nordic" => day
                 ? new(Color.FromRgb(221, 239, 248), Color.FromRgb(194, 222, 237), Color.FromRgb(133, 196, 223), Color.FromRgb(184, 222, 238), Color.FromRgb(45, 128, 174), Color.FromRgb(248, 253, 255), Color.FromRgb(103, 139, 160), Color.FromRgb(69, 153, 190), Color.FromRgb(227, 244, 250), Color.FromRgb(247, 252, 255), Color.FromRgb(73, 112, 136), Color.FromRgb(145, 190, 210), Color.FromRgb(119, 170, 196), Color.FromArgb(60, 48, 91, 116))
                 : new(Color.FromRgb(190, 217, 233), Color.FromRgb(158, 192, 213), Color.FromRgb(116, 174, 204), Color.FromRgb(151, 191, 213), Color.FromRgb(46, 113, 155), Color.FromRgb(237, 247, 252), Color.FromRgb(93, 131, 153), Color.FromRgb(64, 139, 176), Color.FromRgb(218, 239, 248), Color.FromRgb(246, 251, 255), Color.FromRgb(58, 99, 126), Color.FromRgb(130, 174, 197), Color.FromRgb(104, 155, 182), Color.FromArgb(64, 48, 91, 116)),

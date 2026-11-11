@@ -13,3 +13,6 @@
 **/.vs/
 /artifacts/
 /dist/
+
+/Assets/WeatherGadget/
+/Assets/WinPrognoza/

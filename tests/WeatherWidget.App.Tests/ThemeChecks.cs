@@ -10,7 +10,7 @@ internal static class ThemeChecks
 {
     public static async Task Run(string fixture)
     {
-        if(ThemeCatalog.All.Count!=7) throw new Exception("Expected seven selectable themes.");
+        if(ThemeCatalog.All.Count!=9) throw new Exception("Expected nine selectable themes.");
         var directory=Path.Combine(Path.GetTempPath(),"WeatherWidgetThemes-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
         var path=Path.Combine(directory,"settings.json");
         try
@@ -20,7 +20,7 @@ internal static class ThemeChecks
                 var settings=new AppSettings {Theme=theme.Id};settings.Save(path,_=>{});
                 if(AppSettings.Load(path,_=>{}).Theme!=theme.Id) throw new Exception("Theme preference did not persist.");
                 if(!theme.ForegroundBrush.IsFrozen || !theme.AccentBrush.IsFrozen) throw new Exception("Theme brushes must be frozen.");
-                if(theme.Id is "modern" or "classic") continue;
+
                 foreach(var code in new[]{0,2,3,45,61,71,95,999}) foreach(bool day in new[]{true,false}) foreach(bool expanded in new[]{true,false})
                 {
                     var art=WeatherArt.Background(code,day,expanded,theme.Id);
