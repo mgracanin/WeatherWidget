@@ -23,6 +23,7 @@ public sealed partial class WidgetWindow
     }
     private void FinishCardResize()
     {
+        app.Settings.Save();
         resizingCard = false; UpdateWeatherPresentation(); ContextMenu=app.BuildWidgetMenu();
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() => { RecoverOnScreen(); }));
     }

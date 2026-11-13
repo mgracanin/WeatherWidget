@@ -26,7 +26,7 @@ public sealed partial class App
         ageTimer.Stop();
     }
     private void NetworkChanged(object? sender, NetworkAvailabilityEventArgs e) { if (e.IsAvailable) Weather?.ScheduleRefresh(); }
-    private void PowerChanged(object sender, PowerModeChangedEventArgs e) { if (e.Mode == PowerModes.Resume) Weather?.ScheduleRefresh(); }
+    private void PowerChanged(object sender, PowerModeChangedEventArgs e) { if (e.Mode == PowerModes.Resume) { Weather?.ScheduleRefresh(); Dispatcher.BeginInvoke(() => { if (!exiting) widget?.SchedulePlacementRecovery(); }); } }
     private async Task RefreshWeather(bool changedCity=false)
     {
         try { await Weather.RefreshAsync(changedCity); }
@@ -85,6 +85,7 @@ public sealed partial class App
             widget.ContextMenu=BuildWidgetMenu();
             if (host) widget.ApplyDesktopMode();
             widget.RecoverOnScreen();
+            Settings.Save();
         }
         else {Settings.Save();Recover(false);}
     }

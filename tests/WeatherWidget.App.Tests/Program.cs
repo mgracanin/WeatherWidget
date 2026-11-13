@@ -63,6 +63,44 @@ internal static class Program
         finally { app.Settings.Locked = previous; }
         return Task.CompletedTask;
     }
+    private static Task PlacementRecovery()
+    {
+        var settings=new AppSettings {Left=-1100,Top=700,Locked=true};
+        var original=new System.Drawing.Rectangle(-1920,0,1920,1080);
+        var temporary=new System.Drawing.Rectangle(0,0,1024,768);
+        var desired=WidgetWindow.DesiredPosition(settings,0,0);
+        var fallback=WidgetWindow.FitPosition(desired,130,67,temporary);
+        if(fallback.X!=0 || fallback.Y!=700) throw new Exception("Disconnected display fallback is not visible.");
+        var restored=WidgetWindow.FitPosition(WidgetWindow.DesiredPosition(settings,fallback.X,fallback.Y),130,67,original);
+        if(restored!=desired || settings.Left!=-1100 || settings.Top!=700) throw new Exception("Temporary fallback replaced the preferred position.");
+        settings.Left=1800;settings.Top=950;
+        var reduced=WidgetWindow.FitPosition(WidgetWindow.DesiredPosition(settings,0,0),260,134,temporary);
+        if(reduced.X!=764 || reduced.Y!=634) throw new Exception("Reduced resolution/large widget is not clamped.");
+        var full=WidgetWindow.FitPosition(WidgetWindow.DesiredPosition(settings,reduced.X,reduced.Y),130,67,new(0,0,1920,1080));
+        if(full.X!=1800-10 || full.Y!=950) throw new Exception("Restored resolution did not return to the preferred edge.");
+        settings.Left=null;settings.Top=null;
+        if(WidgetWindow.DesiredPosition(settings,40,50)!=new System.Drawing.Point(40,50)) throw new Exception("First-run position lost.");
+        var app=PreviewRenderer.FixtureApp;
+        var previous=app.Settings;
+        var property=typeof(App).GetProperty(nameof(App.Settings))!;
+        WidgetWindow? window=null;
+        try
+        {
+            var area=System.Windows.Forms.Screen.PrimaryScreen!.WorkingArea;
+            settings.Left=area.Left+50;settings.Top=area.Top+60;
+            property.SetValue(app,settings);
+            window=new WidgetWindow(app);
+            var handle=new System.Windows.Interop.WindowInteropHelper(window).EnsureHandle();
+            Native.SetWindowPos(handle,0,area.Left+200,area.Top+200,0,0,Native.NoActivate|Native.NoSize|0x4);
+            window.SavePosition(); // Even explicit saves cannot replace a locked anchor.
+            if(settings.Left!=area.Left+50 || settings.Top!=area.Top+60) throw new Exception("Locked save overwrote the anchor.");
+            window.RecoverOnScreen();
+            Native.GetWindowRect(handle,out var rect);
+            if(rect.Left!=settings.Left || rect.Top!=settings.Top) throw new Exception($"Native window {rect.Left},{rect.Top} did not return to {settings.Left},{settings.Top}; size {rect.Width}x{rect.Height}; alive={window.IsNativeWindowAlive}.");
+        }
+        finally { window?.Close();property.SetValue(app,previous); }
+        return Task.CompletedTask;
+    }
     private static async Task<int> RunAll()
     {
         var tests = new (string Name, Func<Task> Run)[]
@@ -86,6 +124,7 @@ internal static class Program
             ("rain-soon resolution, freshness and precipitation types", ExtraChecks.Rain),
             ("notification opt-in, quiet hours, persisted cooldown and city changes", ExtraChecks.Notifications),
             ("edge snapping across negative and oversized monitor bounds", ExtraChecks.Snapping),
+            ("resume recovery preserves the preferred position across temporary display changes", PlacementRecovery),
             ("bounded localized tray tooltip with units and offline status", ExtraChecks.TrayTooltip),
             ("all editor preferences persist without overwriting placement or alerts", SettingsChecks.Persistence),
             ("save/startup failures leave live settings unchanged and roll back registration", SettingsChecks.SaveFailures),

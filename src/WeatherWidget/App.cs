@@ -102,7 +102,7 @@ public sealed partial class App : System.Windows.Application
         widget.CheckDesktopHost();
         if (requested) widget.RevealOnScreen();
     }
-    public void ExitWidget() { exiting = true; widget?.SavePosition(); Shutdown(); }
+    public void ExitWidget() { exiting = true; Shutdown(); }
     protected override void OnExit(ExitEventArgs e)
     {
         exiting = true;

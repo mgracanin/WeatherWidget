@@ -13,6 +13,8 @@ public sealed partial class WidgetWindow : Window
     private nint handle, desktopHost;
     private uint hostProcess;
     private readonly System.Windows.Threading.DispatcherTimer recoveryLift = new() { Interval=TimeSpan.FromSeconds(5) };
+    private readonly System.Windows.Threading.DispatcherTimer placementRecovery = new() { Interval=TimeSpan.FromSeconds(2) };
+    private bool restoringPlacement;
     private TextBlock status = new();
     private Native.Point? dragOrigin;
     private Native.Rect dragBounds;
@@ -48,7 +50,8 @@ public sealed partial class WidgetWindow : Window
             Native.SetWindowPos(handle, 1, 0, 0, 0, 0, Native.NoActivate|Native.NoMove|Native.NoSize);
             AppSettings.Log("Recovery visibility lift ended; restored desktop Z order.");
         };
-        Closed += (_, _) => recoveryLift.Stop();
+        placementRecovery.Tick += (_, _) => { placementRecovery.Stop(); CheckDesktopHost(); RecoverOnScreen(); };
+        Closed += (_, _) => { recoveryLift.Stop(); placementRecovery.Stop(); };
         Deactivated += (_, _) =>
         {
             if (IsNativeWindowAlive && !recoveryLift.IsEnabled && !app.Settings.AlwaysOnTop && !app.InspectionMode)
@@ -57,14 +60,29 @@ public sealed partial class WidgetWindow : Window
         PreviewMouseLeftButtonDown += BeginDrag;
         PreviewMouseMove += Drag;
         PreviewMouseLeftButtonUp += EndDrag;
-        LostMouseCapture += (_, _) => { if (dragOrigin != null) { dragOrigin=null; SavePosition(); } };
+        LostMouseCapture += (_, _) => { if (dragOrigin != null) { dragOrigin=null; if (moved) SavePosition(); } };
     }
     public ContextMenu CreateContextMenu() => app.BuildWidgetMenu();
     private nint WindowMessage(nint hwnd, int message, nint wp, nint lp, ref bool handled)
     {
         if (message == TaskbarCreatedMessage || message == 0x007E)
-            Dispatcher.BeginInvoke(() => { CheckDesktopHost(); RecoverOnScreen(); });
+            SchedulePlacementRecovery();
+        else if (message == 0x0047 && app.Settings.Locked && !restoringPlacement && !IsAtPreferredPosition())
+            SchedulePlacementRecovery();
         return 0;
+    }
+    private bool IsAtPreferredPosition()
+    {
+        if (!Native.GetWindowRect(handle, out var rect)) return true;
+        var desired=DesiredPosition(app.Settings,rect.Left,rect.Top);
+        var work=Forms.Screen.FromRectangle(new System.Drawing.Rectangle(desired.X,desired.Y,rect.Width,rect.Height)).WorkingArea;
+        var fitted=FitPosition(desired,rect.Width,rect.Height,work);
+        return rect.Left==fitted.X && rect.Top==fitted.Y;
+    }
+    internal void SchedulePlacementRecovery()
+    {
+        if (!IsNativeWindowAlive) return;
+        placementRecovery.Stop(); placementRecovery.Start();
     }
     public void CheckDesktopHost()
     {
@@ -161,19 +179,38 @@ public sealed partial class WidgetWindow : Window
     }    private void RestorePosition()
     {
         var work=Forms.Screen.PrimaryScreen!.WorkingArea;
-        MoveScreen((int)(app.Settings.Left ?? work.Right-260), (int)(app.Settings.Top ?? work.Top+48));
+        if (app.Settings.Left is null || app.Settings.Top is null)
+        {
+            app.Settings.Left ??= work.Right-260; app.Settings.Top ??= work.Top+48;
+            app.Settings.Save();
+        }
+        MoveScreen((int)app.Settings.Left.Value, (int)app.Settings.Top.Value);
         RecoverOnScreen();
     }
     public void RecoverOnScreen()
     {
         if (!IsNativeWindowAlive) return;
-        Native.GetWindowRect(handle, out var rect);
-        var target = new System.Drawing.Rectangle(rect.Left, rect.Top, rect.Width, rect.Height);
+        if (!Native.GetWindowRect(handle, out var rect)) return;
+        var desired = DesiredPosition(app.Settings, rect.Left, rect.Top);
+        var target = new System.Drawing.Rectangle(desired.X, desired.Y, rect.Width, rect.Height);
         var screen=Forms.Screen.FromRectangle(target).WorkingArea;
-        MoveScreen(Math.Clamp(rect.Left, screen.Left, Math.Max(screen.Left, screen.Right-rect.Width)), Math.Clamp(rect.Top, screen.Top, Math.Max(screen.Top, screen.Bottom-rect.Height)));
-        Native.ShowWindow(handle, 4);
-        SavePosition();
+        var position = FitPosition(desired, rect.Width, rect.Height, screen);
+        restoringPlacement = true;
+        try
+        {
+            if (rect.Left != position.X || rect.Top != position.Y) MoveScreen(position.X, position.Y);
+            Native.ShowWindow(handle, 4);
+        }
+        finally { restoringPlacement = false; }
+        // A missing monitor may only be temporary. Never replace the user's anchor
+        // with a fallback position chosen while displays are reconnecting.
     }
+    internal static System.Drawing.Point DesiredPosition(AppSettings settings, int currentX, int currentY) =>
+        new((int)(settings.Left ?? currentX), (int)(settings.Top ?? currentY));
+    internal static System.Drawing.Point FitPosition(System.Drawing.Point desired, int width, int height, System.Drawing.Rectangle work) =>
+        new(Math.Clamp(desired.X, work.Left, Math.Max(work.Left, work.Right-width)),
+            Math.Clamp(desired.Y, work.Top, Math.Max(work.Top, work.Bottom-height)));
+
     public void RevealOnScreen()
     {
         RecoverOnScreen();
@@ -195,7 +232,7 @@ public sealed partial class WidgetWindow : Window
     }
     public void SavePosition()
     {
-        if (!IsNativeWindowAlive || !Native.GetWindowRect(handle, out var rect)) return;
+        if (app.Settings.Locked || !IsNativeWindowAlive || !Native.GetWindowRect(handle, out var rect)) return;
         app.Settings.Left=rect.Left; app.Settings.Top=rect.Top; app.Settings.Save();
     }
     private void BeginDrag(object sender, MouseButtonEventArgs e)
@@ -216,7 +253,7 @@ public sealed partial class WidgetWindow : Window
     {
         if (dragOrigin is null) return;
         dragOrigin=null; ReleaseMouseCapture();
-        if (moved)
+        if (moved && !app.Settings.Locked)
         {
             if (app.Settings.SnapToEdges && !app.Settings.Locked && Native.GetWindowRect(handle,out var bounds))
             {
@@ -225,9 +262,10 @@ public sealed partial class WidgetWindow : Window
                 var snapped=EdgeSnap.Position(bounds.Left,bounds.Top,bounds.Width,bounds.Height,area.Left,area.Top,area.Right,area.Bottom,distance);
                 MoveScreen(snapped.X,snapped.Y);
             }
+            SavePosition();
             RecoverOnScreen();
         }
-        else CardClicked?.Invoke(this, EventArgs.Empty);
+        else if (!moved) CardClicked?.Invoke(this, EventArgs.Empty);
         e.Handled=true;
     }
 }
