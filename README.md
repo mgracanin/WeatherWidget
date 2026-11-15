@@ -84,6 +84,7 @@ Microsoft's artwork is not included with WeatherWidget. Access to Windows 7 and 
 | **Location & units** | City search, up to ten saved locations, Windows/IP location discovery, temperature and wind units, and Croatian/English language choices. |
 | **Appearance** | Theme previews, separate card/forecast sizes, and the optional legacy image importer. |
 | **Desktop** | Position lock, edge snapping, always-on-top and startup with Windows. |
+| **About** | App version, project and support links, weather-data credits and artwork notices. |
 | **Notifications** | Weather reminders and quiet hours, using your computer's local time. |
 
 **Apply** saves and updates the widget. **Save and close** does the same and closes Settings. **Cancel**, Escape or × discards edits made since the last Apply. Reopen Settings after changing the language to update the window's labels.

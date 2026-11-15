@@ -70,7 +70,11 @@ internal static class SettingsChecks
         var window=new SettingsWindow(live.CreateDraft(),client,draft=>{applied++;captured=draft.CreateDraft();return true;},()=>{});
         try
         {
-            Check(Descendants<TabItem>(window).Count()==4,"Expected four settings sections.");
+            Check(Descendants<TabItem>(window).Count()==5,"Expected five settings sections.");
+            var about=Descendants<TabItem>(window).Single(tab=>Equals(tab.Header,"About"));
+            var aboutText=string.Join(" ",Descendants<TextBlock>(about).Select(text=>text.Text));
+            Check(aboutText.Contains(typeof(App).Assembly.GetName().Version!.ToString(3)) && aboutText.Contains("CC BY 4.0"),"About version or credits missing.");
+            Check(Descendants<TextBlock>(about).SelectMany(text=>text.Inlines.OfType<System.Windows.Documents.Hyperlink>()).Count()==8,"About links missing.");
             Check(Field<Slider>(window,"cardScale").Value==1.37,"Editor rounded an existing custom size.");
             Field<ComboBox>(window,"themeChoice").SelectedValue="forest";
             Check(Field<ComboBox>(window,"themeChoice").Text=="Forest","Selected theme label is blank.");
@@ -107,7 +111,7 @@ internal static class SettingsChecks
             try
             {
                 var tabs=Descendants<TabControl>(window).Single();
-                for(int i=0;i<4;i++)
+                for(int i=0;i<tabs.Items.Count;i++)
                 {
                     tabs.SelectedIndex=i;
                     var root=(FrameworkElement)window.Content;

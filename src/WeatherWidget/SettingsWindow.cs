@@ -71,6 +71,7 @@ internal sealed partial class SettingsWindow : Window
         tabs.Items.Add(Tab(T("Izgled", "Appearance"), AppearancePage()));
         tabs.Items.Add(Tab(T("Radna površina", "Desktop"), DesktopPage()));
         tabs.Items.Add(Tab(T("Obavijesti", "Notifications"), NotificationsPage()));
+        tabs.Items.Add(Tab(T("O programu", "About"), AboutPage()));
         root.Children.Add(tabs);
         Content = root;
 
